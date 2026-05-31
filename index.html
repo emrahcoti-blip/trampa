@@ -1538,12 +1538,15 @@ function openAuth() { document.getElementById('auth-modal').classList.add('open'
 function closeAuth() { document.getElementById('auth-modal').classList.remove('open'); }
 async function fakeLogin() {
   if (!supabase) { showToast('⏳ Се поврзувам...'); await initSupabase(); }
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin }
+  const emailInput = document.querySelector('#auth-modal input[type="email"]');
+  const email = emailInput?.value;
+  if (!email) { showToast('⚠️ Внеси е-маил адреса'); return; }
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email,
+    options: { emailRedirectTo: 'https://trampa.online' }
   });
-  if (error) showToast('❌ Грешка: ' + error.message);
-}
+  if (error) showToast('❌ ' + error.message);
+  else showToast('✅ Провери го е-маилот — испративме линк за најава!');
 
 async function checkSession() {
   if (!supabase) return;
