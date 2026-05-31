@@ -1027,105 +1027,24 @@ input, select, textarea { font-family: var(--font-body); }
 <!-- SCREEN: PROFILE -->
 <div class="screen page-pad" id="s-profile">
   <div class="profile-wrap">
-    <div class="profile-hero">
-      <div class="profile-avatar">ЕС</div>
+    <div class="profile-hero" id="profile-hero">
+      <div class="profile-avatar" id="profile-initials">?</div>
       <div>
-        <div class="profile-name">Emrah S.</div>
-        <div class="profile-since">Член од Јануари 2025</div>
+        <div class="profile-name" id="profile-name">—</div>
+        <div class="profile-since" id="profile-since">—</div>
         <div style="display:flex;gap:4px;margin-top:6px">
-          <span style="background:var(--primary);color:white;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px">★ 4.9</span>
-          <span style="background:rgba(255,255,255,0.15);color:var(--cream);font-size:10px;padding:2px 8px;border-radius:10px">Верификуван трговец</span>
+          <span style="background:var(--primary);color:white;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px" id="profile-score">★ 5.0</span>
         </div>
       </div>
     </div>
     <div class="profile-stats">
-      <div class="ps-card"><div class="ps-num">12</div><div class="ps-lbl" id="ps1">Огласи</div></div>
-      <div class="ps-card"><div class="ps-num">8</div><div class="ps-lbl" id="ps2">Размени</div></div>
-      <div class="ps-card"><div class="ps-num">4.9★</div><div class="ps-lbl" id="ps3">Рејтинг</div></div>
+      <div class="ps-card"><div class="ps-num" id="profile-listings">0</div><div class="ps-lbl" id="ps1">Огласи</div></div>
+      <div class="ps-card"><div class="ps-num" id="profile-trades">0</div><div class="ps-lbl" id="ps2">Размени</div></div>
+      <div class="ps-card"><div class="ps-num" id="profile-rating">5.0★</div><div class="ps-lbl" id="ps3">Рејтинг</div></div>
     </div>
-    <div class="setup-wrap" style="padding:0;max-width:100%">
-      <div class="setup-card">
-        <h3 style="font-family:var(--font-display);font-size:16px;color:var(--text);margin-bottom:1rem">🚀 Постави ја Trampa.mk живо</h3>
-        <div class="setup-step">
-          <div class="ss-num">1</div>
-          <div>
-            <div class="ss-title">Регистрирај се на Supabase</div>
-            <div class="ss-desc">Оди на <strong>supabase.com</strong> → Create new project → Избери регион Europe West. Бесплатно. Добиваш вистинска PostgreSQL база.</div>
-          </div>
-        </div>
-        <div class="setup-step">
-          <div class="ss-num">2</div>
-          <div>
-            <div class="ss-title">Создади ги табелите</div>
-            <div class="ss-desc">Во Supabase → SQL Editor → залепи го следниов код:</div>
-            <div class="code-block"><span class="code-comment">-- Корисници</span>
-create table profiles (
-  id uuid references auth.users primary key,
-  name text, avatar_url text,
-  location text, score numeric default 5.0,
-  trades_count int default 0,
-  created_at timestamptz default now()
-);
-<span class="code-comment">-- Огласи</span>
-create table listings (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references profiles(id),
-  title text not null,
-  category text, offer text,
-  want text, value_eur numeric,
-  topup_dir text, topup_amt numeric,
-  description text, location text,
-  images text[], status text default 'active',
-  created_at timestamptz default now()
-);
-<span class="code-comment">-- Пораки / чет</span>
-create table messages (
-  id uuid primary key default gen_random_uuid(),
-  listing_id uuid references listings(id),
-  from_id uuid references profiles(id),
-  to_id uuid references profiles(id),
-  body text, created_at timestamptz default now()
-);
-<span class="code-comment">-- Размени (завршени)</span>
-create table trades (
-  id uuid primary key default gen_random_uuid(),
-  listing_a uuid references listings(id),
-  listing_b uuid references listings(id),
-  topup_amt numeric, topup_dir text,
-  fee_eur numeric,
-  completed_at timestamptz default now()
-);</div>
-          </div>
-        </div>
-        <div class="setup-step">
-          <div class="ss-num">3</div>
-          <div>
-            <div class="ss-title">Постави на Vercel</div>
-            <div class="ss-desc">Оди на <strong>vercel.com</strong> → Import → Качи го кодот → Deploy. Добиваш live URL за 60 секунди. Потоа поврзи го trampa.mk доменот (регистрирај преку MARnet, ~€15/год).</div>
-          </div>
-        </div>
-        <div class="setup-step">
-          <div class="ss-num">4</div>
-          <div>
-            <div class="ss-title">Додади Google Auth</div>
-            <div class="ss-desc">Supabase → Authentication → Providers → Google → вметни Client ID и Secret од Google Cloud Console. Корисниците веднаш можат да се логираат.</div>
-          </div>
-        </div>
-        <div class="setup-step">
-          <div class="ss-num">5</div>
-          <div>
-            <div class="ss-title">Вметни Supabase клучевите</div>
-            <div class="ss-desc">Во кодот замени ги двете вредности:</div>
-            <div class="code-block">const SUPABASE_URL = 'https://xxxx.supabase.co'
-const SUPABASE_KEY = 'your-anon-key-here'
-<span class="code-comment">// Ги наоѓаш во: Supabase → Settings → API</span></div>
-          </div>
-        </div>
-        <button class="btn-primary" onclick="showToast('📋 Во продукција: ќе се отвори вистинската документација')" style="width:100%;margin-top:4px;justify-content:center">
-          Отвори целосна документација →
-        </button>
-      </div>
-    </div>
+    <div id="my-listings-wrap" style="margin-top:1rem"></div>
+    <button onclick="logout()" style="width:100%;margin-top:1rem;background:transparent;border:1px solid var(--border2);border-radius:30px;padding:12px;font-size:14px;color:var(--text3);cursor:pointer">Одјави се</button>
+
   </div>
 </div>
 
@@ -1619,15 +1538,11 @@ function openAuth() { document.getElementById('auth-modal').classList.add('open'
 function closeAuth() { document.getElementById('auth-modal').classList.remove('open'); }
 async function fakeLogin() {
   if (!supabase) { showToast('⏳ Се поврзувам...'); await initSupabase(); }
-  const emailInput = document.querySelector('#auth-modal input[type="email"]');
-  const email = emailInput?.value;
-  if (!email) { showToast('⚠️ Внеси е-маил адреса'); return; }
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email,
-    options: { emailRedirectTo: 'https://trampa.online' }
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
   });
-  if (error) showToast('❌ ' + error.message);
-  else showToast('✅ Провери го е-маилот — испративме линк за најава!');
+  if (error) showToast('❌ Грешка: ' + error.message);
 }
 
 async function checkSession() {
@@ -1636,7 +1551,6 @@ async function checkSession() {
   if (session) {
     isLoggedIn = true;
     const user = session.user;
-    // Create profile if first login
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')
@@ -1650,8 +1564,51 @@ async function checkSession() {
       });
     }
     closeAuth();
-    showToast('✅ Добредојде ' + (user.user_metadata?.full_name || user.email) + '!');
+    await loadProfile(user);
   }
+}
+
+async function loadProfile(user) {
+  if (!user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    user = session.user;
+  }
+  const name = user.user_metadata?.full_name || user.email || 'Корисник';
+  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+  const since = new Date(user.created_at).toLocaleDateString('mk', { month: 'long', year: 'numeric' });
+
+  const el = (id) => document.getElementById(id);
+  if (el('profile-initials')) el('profile-initials').textContent = initials;
+  if (el('profile-name')) el('profile-name').textContent = name;
+  if (el('profile-since')) el('profile-since').textContent = 'Член од ' + since;
+
+  // Load real listing count
+  const { count } = await supabase
+    .from('listings')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id);
+  if (el('profile-listings')) el('profile-listings').textContent = count || 0;
+
+  // Load profile score
+  const { data: prof } = await supabase
+    .from('profiles')
+    .select('score, trades_count')
+    .eq('id', user.id)
+    .single();
+  if (prof) {
+    if (el('profile-score')) el('profile-score').textContent = '★ ' + (prof.score || 5.0);
+    if (el('profile-rating')) el('profile-rating').textContent = (prof.score || 5.0) + '★';
+    if (el('profile-trades')) el('profile-trades').textContent = prof.trades_count || 0;
+  }
+}
+
+async function logout() {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+  isLoggedIn = false;
+  showToast('👋 Се одјави успешно');
+  setTimeout(() => location.reload(), 1000);
 }
 
 // ============================================================
