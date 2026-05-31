@@ -1171,10 +1171,19 @@ const SUPABASE_KEY = 'your-anon-key-here'
 
 <script>
 // ============================================================
-// DATA & STATE
+// SUPABASE CONFIG — PASTE YOUR ANON KEY BELOW
 // ============================================================
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://cflntakqzldgkmznokde.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tPt_tIDUMveolTfSkjBNSg_llODT_vn'; //
+
+// Load Supabase client
+let supabase = null;
+async function initSupabase() {
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+  supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  await checkSession();
+  await loadListings();
+}
 
 let currentLang = 'mk';
 let currentScreen = 'home';
@@ -1330,6 +1339,94 @@ function filterCat(cat) {
 // ============================================================
 // LISTINGS
 // ============================================================
+async function loadListings() {
+  if (!supabase) return renderListings();
+  const grid = document.getElementById('listings-grid');
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text3)">Се вчитуваат огласи...</div>';
+  let query = supabase.from('listings').select('*, profiles(name, score, trades_count)').eq('status', 'active').order('created_at', { ascending: false });
+  if (selectedCat !== 'all') query = query.eq('category', selectedCat);
+  const { data, error } = await query;
+  if (error || !data || data.length === 0) {
+    renderListings(); // fall back to demo data
+    return;
+  }
+  document.getElementById('listings-count').textContent = `Прикажани ${data.length} огласи`;
+  const catEmojis = { vozila:'🚗', elektronika:'📱', nekretnini:'🏠', obleka:'👕', sport:'⚽', dom:'🛋', rabota:'💼', ostanato:'📦' };
+  const catColors = { vozila:'#EDF2E8', elektronika:'#EEF0F8', nekretnini:'#F5EEE8', obleka:'#F8EEF5', sport:'#EEF8EE', dom:'#FDF5E8' };
+  grid.innerHTML = data.map(l => `
+    <div class="listing-card" onclick="openDetailReal('${l.id}')">
+      <div class="lc-img" style="background:${catColors[l.category]||'#F5EEE8'}">
+        ${catEmojis[l.category]||'📦'}
+        <span class="lc-cat-badge">${l.category||'Останато'}</span>
+      </div>
+      <div class="lc-body">
+        <div class="lc-title">${l.title}</div>
+        <div class="lc-trade">
+          <div class="lc-trade-row">
+            <span class="lc-offer">${l.offer||'—'}</span>
+            <span class="lc-arrow">⇄</span>
+            <span class="lc-want">${l.want||'—'}</span>
+          </div>
+          ${l.topup_amt ? `<div class="lc-topup">💰 ${l.topup_dir === 'me' ? 'Јас доплаќам' : 'Тие доплаќаат'} €${l.topup_amt}</div>` : ''}
+        </div>
+        <div class="lc-footer">
+          <div class="lc-meta">
+            <span class="lc-loc">📍 ${l.location||'Македонија'}</span>
+            <span class="lc-score">★ ${l.profiles?.score||'5.0'}</span>
+          </div>
+          <span class="lc-time">${new Date(l.created_at).toLocaleDateString('mk')}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openDetailReal(id) {
+  if (!supabase) return;
+  const { data: l } = await supabase.from('listings').select('*, profiles(name, score, trades_count, location)').eq('id', id).single();
+  if (!l) return;
+  const catEmojis = { vozila:'🚗', elektronika:'📱', nekretnini:'🏠', obleka:'👕', sport:'⚽', dom:'🛋' };
+  const catColors = { vozila:'#EDF2E8', elektronika:'#EEF0F8', nekretnini:'#F5EEE8' };
+  document.getElementById('detail-content').innerHTML = `
+    <button class="back-btn" onclick="goTo('home');loadListings()">← Назад</button>
+    <div class="detail-card">
+      <div class="detail-img" style="background:${catColors[l.category]||'#F5EEE8'}">${catEmojis[l.category]||'📦'}</div>
+      <div class="detail-body">
+        <h2 class="detail-title">${l.title}</h2>
+        <div class="detail-meta">
+          <span class="dm-item">📍 ${l.location||'Македонија'}</span>
+          <span class="dm-item">📅 ${new Date(l.created_at).toLocaleDateString('mk')}</span>
+        </div>
+        <div class="detail-trade">
+          <div class="dt-label">Размена</div>
+          <div class="dt-row">
+            <div class="dt-box"><div class="dt-box-label">Нуди</div><div class="dt-box-val">${l.offer}</div></div>
+            <div class="dt-arrow">⇄</div>
+            <div class="dt-box" style="border-color:var(--primary-light)"><div class="dt-box-label">Бара</div><div class="dt-box-val" style="color:var(--primary-dark)">${l.want}</div></div>
+          </div>
+          ${l.topup_amt ? `<span class="topup-tag">💰 €${l.topup_amt} ${l.topup_dir === 'me' ? 'доплаќа огласувачот' : 'доплаќаш ти'}</span>` : ''}
+        </div>
+        <p class="detail-desc">${l.description||''}</p>
+      </div>
+    </div>
+    <div class="trader-card">
+      <div class="trader-row">
+        <div class="trader-avatar">${(l.profiles?.name||'?').charAt(0).toUpperCase()}</div>
+        <div style="flex:1">
+          <div class="trader-name">${l.profiles?.name||'Корисник'}</div>
+          <div class="trader-stats">${l.profiles?.trades_count||0} размени • ${l.profiles?.location||l.location||'Македонија'}</div>
+          <div class="trader-score">★ ${l.profiles?.score||'5.0'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-secondary" onclick="showToast('📞 Достапно по верификација')">📞 Покажи број</button>
+      <button class="btn-primary" onclick="isLoggedIn ? showToast('💬 Чет наскоро!') : openAuth()">💬 Пишувај порака</button>
+    </div>
+  `;
+  goTo('detail');
+}
+
 function renderListings() {
   const grid = document.getElementById('listings-grid');
   const filtered = selectedCat === 'all' ? listings : listings.filter(l => l.cat === selectedCat);
@@ -1466,13 +1563,53 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('f-want').addEventListener('input', updatePreview);
 });
 
-function submitListing() {
+async function submitListing() {
   const offer = document.getElementById('f-offer').value;
   const want = document.getElementById('f-want').value;
+  const title = document.getElementById('f-offer').value;
+  const cat = document.getElementById('f-cat').value;
+  const val = document.getElementById('f-val').value;
+  const desc = document.getElementById('f-desc').value;
+  const loc = document.getElementById('f-loc').value;
+  const topupAmt = document.getElementById('f-topup-amt').value;
+
   if (!offer || !want) { showToast('⚠️ Внеси го предметот и она што го бараш'); return; }
   if (!isLoggedIn) { openAuth(); return; }
-  showToast('✅ Огласот е објавен успешно!');
-  setTimeout(() => goTo('home'), 1500);
+  if (!supabase) { showToast('⏳ Се поврзувам со базата...'); return; }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { openAuth(); return; }
+
+  const catMap = {
+    'Возила — Автомобили':'vozila','Возила — Мотори':'vozila',
+    'Електроника — Телефони':'elektronika','Електроника — Лаптопи':'elektronika',
+    'Недвижности':'nekretnini','Облека и мода':'obleka',
+    'Спорт и рекреација':'sport','Дом и градина':'dom','Останато':'ostanato'
+  };
+
+  const selectedTopup = document.querySelector('.topup-opt.selected');
+  const topupDir = selectedTopup?.id === 'tp-me' ? 'me' : selectedTopup?.id === 'tp-them' ? 'them' : 'none';
+
+  const { error } = await supabase.from('listings').insert({
+    user_id: session.user.id,
+    title: offer,
+    category: catMap[cat] || 'ostanato',
+    offer: offer,
+    want: want,
+    value_eur: val ? parseFloat(val) : null,
+    topup_dir: topupDir,
+    topup_amt: topupAmt ? parseFloat(topupAmt) : null,
+    description: desc,
+    location: loc || 'Македонија',
+    status: 'active'
+  });
+
+  if (error) {
+    showToast('❌ Грешка: ' + error.message);
+  } else {
+    showToast('✅ Огласот е објавен успешно!');
+    setTimeout(() => { goTo('home'); loadListings(); }, 1500);
+  }
 }
 
 // ============================================================
@@ -1480,10 +1617,37 @@ function submitListing() {
 // ============================================================
 function openAuth() { document.getElementById('auth-modal').classList.add('open'); }
 function closeAuth() { document.getElementById('auth-modal').classList.remove('open'); }
-function fakeLogin() {
-  isLoggedIn = true;
-  closeAuth();
-  showToast('✅ Успешно влезе!');
+async function fakeLogin() {
+  if (!supabase) { showToast('⏳ Се поврзувам...'); await initSupabase(); }
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  });
+  if (error) showToast('❌ Грешка: ' + error.message);
+}
+
+async function checkSession() {
+  if (!supabase) return;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    isLoggedIn = true;
+    const user = session.user;
+    // Create profile if first login
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+    if (!profile) {
+      await supabase.from('profiles').insert({
+        id: user.id,
+        name: user.user_metadata?.full_name || user.email,
+        avatar_url: user.user_metadata?.avatar_url
+      });
+    }
+    closeAuth();
+    showToast('✅ Добредојде ' + (user.user_metadata?.full_name || user.email) + '!');
+  }
 }
 
 // ============================================================
@@ -1500,8 +1664,12 @@ function showToast(msg) {
 // INIT
 // ============================================================
 renderCats(i18n.mk.cats);
-renderListings();
 renderMatches();
+// Initialize Supabase and load real data
+initSupabase().catch(err => {
+  console.log('Supabase init failed, using demo data:', err);
+  renderListings();
+});
 </script>
 </body>
 </html>
