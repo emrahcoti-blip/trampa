@@ -1547,6 +1547,7 @@ async function fakeLogin() {
   });
   if (error) showToast('❌ ' + error.message);
   else showToast('✅ Провери го е-маилот — испративме линк за најава!');
+}
 
 async function checkSession() {
   if (!supabase) return;
