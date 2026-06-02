@@ -871,6 +871,56 @@ input, select, textarea { font-family: var(--font-body); }
 @media (max-width: 400px) {
   .listings-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== CHAT SCREEN ===== */
+.chat-screen-wrap { max-width: 580px; margin: 0 auto; padding: 0; display: flex; flex-direction: column; height: calc(100vh - 120px); }
+.chat-header { padding: 12px 1.25rem; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 58px; z-index: 80; }
+.chat-back { background: transparent; border: none; color: var(--text2); font-size: 20px; cursor: pointer; padding: 0; display: flex; align-items: center; }
+.chat-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--earth); flex-shrink: 0; }
+.chat-header-info { flex: 1; }
+.chat-header-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.chat-header-trade { font-size: 11px; color: var(--text3); }
+.chat-pdf-btn { background: var(--success-light); border: none; border-radius: 20px; padding: 6px 12px; font-size: 11px; color: var(--success); font-weight: 500; cursor: pointer; white-space: nowrap; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 8px; background: var(--cream-light); }
+.msg-wrap { display: flex; flex-direction: column; }
+.msg-wrap.mine { align-items: flex-end; }
+.msg-wrap.theirs { align-items: flex-start; }
+.msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+.msg-wrap.mine .msg-bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+.msg-wrap.theirs .msg-bubble { background: white; color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.msg-time { font-size: 10px; color: var(--text3); margin-top: 2px; padding: 0 4px; }
+.msg-system { text-align: center; font-size: 11px; color: var(--text3); background: var(--surface2); border-radius: 10px; padding: 4px 10px; margin: 4px auto; }
+.chat-input-wrap { padding: 10px 1rem; background: white; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-end; position: sticky; bottom: 58px; }
+.chat-input { flex: 1; background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; padding: 10px 14px; font-size: 14px; color: var(--text); outline: none; resize: none; max-height: 100px; font-family: var(--font-body); }
+.chat-input:focus { border-color: var(--primary); }
+.chat-send { background: var(--primary); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 16px; transition: background .2s; }
+.chat-send:hover { background: var(--primary-dark); }
+
+/* INBOX */
+.inbox-wrap { max-width: 580px; margin: 0 auto; padding: 1rem 1.25rem 2rem; }
+.inbox-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 1rem; }
+.inbox-card { background: white; border: 1px solid var(--border); border-radius: var(--r-lg); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all .2s; }
+.inbox-card:hover { border-color: var(--primary); box-shadow: var(--shadow); }
+.inbox-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--earth); flex-shrink: 0; }
+.inbox-info { flex: 1; min-width: 0; }
+.inbox-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.inbox-preview { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inbox-time { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+.inbox-unread { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+.empty-inbox { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+.empty-inbox-icon { font-size: 48px; margin-bottom: 1rem; }
+.empty-inbox-text { font-size: 14px; }
+
+/* PDF modal */
+.pdf-modal { display: none; position: fixed; inset: 0; background: rgba(44,31,14,0.6); z-index: 300; align-items: center; justify-content: center; padding: 1rem; }
+.pdf-modal.open { display: flex; }
+.pdf-box { background: white; border-radius: var(--r-lg); padding: 1.5rem; width: 100%; max-width: 460px; max-height: 85vh; overflow-y: auto; }
+.pdf-header { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.pdf-sub { font-size: 12px; color: var(--text3); margin-bottom: 1.25rem; }
+.pdf-section { background: var(--surface); border-radius: var(--r); padding: 10px 14px; margin-bottom: 10px; }
+.pdf-label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+.pdf-val { font-size: 13px; color: var(--text); font-weight: 500; }
+.pdf-actions { display: flex; gap: 8px; margin-top: 1rem; }
 </style>
 </head>
 <body>
@@ -1075,6 +1125,76 @@ input, select, textarea { font-family: var(--font-body); }
   </div>
 </div>
 
+
+<!-- SCREEN: INBOX -->
+<div class="screen page-pad" id="s-inbox">
+  <div class="inbox-wrap">
+    <div class="inbox-title" id="inbox-title">Пораки</div>
+    <div id="inbox-list">
+      <div class="empty-inbox">
+        <div class="empty-inbox-icon">💬</div>
+        <div class="empty-inbox-text">Сè уште немаш активни разговори.<br>Прифати совпаѓање за да започнеш!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: CHAT -->
+<div class="screen page-pad" id="s-chat">
+  <div class="chat-screen-wrap">
+    <div class="chat-header">
+      <button class="chat-back" onclick="goTo('inbox')">←</button>
+      <div class="chat-avatar" id="chat-avatar">?</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name" id="chat-partner-name">—</div>
+        <div class="chat-header-trade" id="chat-trade-summary">—</div>
+      </div>
+      <button class="chat-pdf-btn" onclick="openPdfModal()">📄 Договор</button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-wrap">
+      <textarea class="chat-input" id="chat-input" placeholder="Напиши порака..." rows="1" onkeydown="handleChatKey(event)"></textarea>
+      <button class="chat-send" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF AGREEMENT MODAL -->
+<div class="pdf-modal" id="pdf-modal">
+  <div class="pdf-box">
+    <div class="pdf-header" id="pdf-title">Договор за размена</div>
+    <div class="pdf-sub" id="pdf-date"></div>
+    <div class="pdf-section">
+      <div class="pdf-label" id="pdf-party1-label">Страна 1</div>
+      <div class="pdf-val" id="pdf-party1">—</div>
+    </div>
+    <div class="pdf-section">
+      <div class="pdf-label" id="pdf-offer1-label">Нуди</div>
+      <div class="pdf-val" id="pdf-offer1">—</div>
+    </div>
+    <div class="pdf-section">
+      <div class="pdf-label" id="pdf-party2-label">Страна 2</div>
+      <div class="pdf-val" id="pdf-party2">—</div>
+    </div>
+    <div class="pdf-section">
+      <div class="pdf-label" id="pdf-offer2-label">Нуди</div>
+      <div class="pdf-val" id="pdf-offer2">—</div>
+    </div>
+    <div class="pdf-section" id="pdf-topup-section">
+      <div class="pdf-label" id="pdf-topup-label">Доплата</div>
+      <div class="pdf-val" id="pdf-topup">—</div>
+    </div>
+    <div class="pdf-section">
+      <div class="pdf-label" id="pdf-terms-label">Услови</div>
+      <div class="pdf-val" style="font-size:12px;font-weight:400;line-height:1.6" id="pdf-terms">Двете страни се согласуваат доброволно да ги разменат горенаведените предмети. Платформата Trampa.online служи само како посредник за комуникација и не е одговорна за состојбата на предметите.</div>
+    </div>
+    <div class="pdf-actions">
+      <button class="btn-secondary" onclick="closePdfModal()" style="flex:1;justify-content:center">Затвори</button>
+      <button class="btn-primary" onclick="printAgreement()" style="flex:2;justify-content:center">🖨 Зачувај / Печати</button>
+    </div>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
   <button class="bn-item active" id="bn-home" onclick="goTo('home')">
@@ -1082,6 +1202,9 @@ input, select, textarea { font-family: var(--font-body); }
   </button>
   <button class="bn-item" id="bn-matches" onclick="goTo('matches')">
     <span class="bn-icon">⚡</span><span class="bn-label" id="bn2">Совпаѓања</span>
+  </button>
+  <button class="bn-item" id="bn-inbox" onclick="goTo('inbox');loadInbox()">
+    <span class="bn-icon">💬</span><span class="bn-label" id="bn-inbox-label">Пораки</span>
   </button>
   <button class="bn-item" id="bn-post" onclick="goTo('post')">
     <span class="bn-icon">➕</span><span class="bn-label" id="bn3">Огласи</span>
@@ -1212,10 +1335,11 @@ const matches = [
 // ============================================================
 function goTo(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('s-' + screen).classList.add('active');
+  const el = document.getElementById('s-' + screen);
+  if (el) el.classList.add('active');
   document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  const bnMap = {home:'bn-home',matches:'bn-matches',post:'bn-post',profile:'bn-profile',detail:'bn-home'};
-  if (bnMap[screen]) document.getElementById(bnMap[screen]).classList.add('active');
+  const bnMap = {home:'bn-home',matches:'bn-matches',post:'bn-post',profile:'bn-profile',detail:'bn-home',inbox:'bn-inbox',chat:'bn-inbox'};
+  if (bnMap[screen]) { const bn = document.getElementById(bnMap[screen]); if(bn) bn.classList.add('active'); }
   currentScreen = screen;
   window.scrollTo(0, 0);
 }
@@ -1482,7 +1606,7 @@ function renderMatches() {
       </div>
       <div class="mc-actions">
         <button class="mc-decline" onclick="showToast('Одбиено')">Одбиј</button>
-        <button class="mc-accept" onclick="openAuth()">💬 Започни размена</button>
+        <button class="mc-accept" onclick="acceptMatch(this, '${m.name}', '${m.offer}', '${m.want}', '${m.topup}')">💬 Започни размена</button>
       </div>
     </div>
   `).join('');
@@ -1686,6 +1810,212 @@ initSupabase().catch(err => {
   renderListings();
   showProfileScreen(false);
 });
+
+// ============================================================
+// CHAT SYSTEM
+// ============================================================
+let currentChatId = null;
+let currentPartner = {};
+let currentTrade = {};
+let chatSubscription = null;
+let allConversations = [];
+
+async function acceptMatch(btn, partnerName, offer, want, topup) {
+  if (!isLoggedIn) { openAuth(); return; }
+  if (!supabase) { showToast('⏳ Се поврзувам...'); return; }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { openAuth(); return; }
+
+  const myName = session.user.user_metadata?.full_name || session.user.email;
+  const chatId = 'chat_' + Date.now();
+
+  // Save conversation to DB
+  const { error } = await supabase.from('messages').insert({
+    listing_id: null,
+    from_id: session.user.id,
+    to_id: session.user.id,
+    body: '__SYSTEM__:Размената е прифатена. Започни разговор!',
+  });
+
+  currentChatId = chatId;
+  currentPartner = { name: partnerName, initials: partnerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) };
+  currentTrade = { offer, want, topup, myName, partnerName };
+
+  openChat(partnerName, offer + ' ⇄ ' + want);
+  showToast('✅ Размената е прифатена!');
+}
+
+function openChat(partnerName, tradeSummary) {
+  const initials = partnerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('chat-avatar').textContent = initials;
+  document.getElementById('chat-partner-name').textContent = partnerName;
+  document.getElementById('chat-trade-summary').textContent = tradeSummary;
+
+  // Clear messages and show welcome
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = `
+    <div class="msg-system">💬 Размената е прифатена — ${new Date().toLocaleDateString('mk')}</div>
+    <div class="msg-system">Договорете ги деталите и генерирајте договор кога сте подготвени</div>
+  `;
+
+  goTo('chat');
+  subscribeToChat();
+}
+
+function subscribeToChat() {
+  if (!supabase || !currentChatId) return;
+  // Unsubscribe from previous
+  if (chatSubscription) chatSubscription.unsubscribe();
+
+  // For demo: use Supabase realtime on messages table
+  chatSubscription = supabase
+    .channel('chat-' + currentChatId)
+    .on('broadcast', { event: 'message' }, (payload) => {
+      appendMessage(payload.payload.text, payload.payload.sender, payload.payload.time, false);
+    })
+    .subscribe();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+
+  const now = new Date().toLocaleTimeString('mk', { hour: '2-digit', minute: '2-digit' });
+  appendMessage(text, 'me', now, true);
+
+  // Broadcast to channel for real-time
+  if (supabase && currentChatId) {
+    await supabase.channel('chat-' + currentChatId).send({
+      type: 'broadcast',
+      event: 'message',
+      payload: { text, sender: currentPartner.name, time: now }
+    });
+  }
+}
+
+function appendMessage(text, sender, time, isMine) {
+  const msgs = document.getElementById('chat-messages');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ' + (isMine ? 'mine' : 'theirs');
+  wrap.innerHTML = `
+    <div class="msg-bubble">${text}</div>
+    <div class="msg-time">${time}</div>
+  `;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+// ============================================================
+// INBOX
+// ============================================================
+async function loadInbox() {
+  const list = document.getElementById('inbox-list');
+  if (!isLoggedIn || !supabase) {
+    list.innerHTML = `
+      <div class="empty-inbox">
+        <div class="empty-inbox-icon">🔒</div>
+        <div class="empty-inbox-text">Пријави се за да ги видиш твоите пораки</div>
+      </div>
+      <button class="btn-primary" onclick="openAuth()" style="width:100%;justify-content:center;margin-top:1rem">Пријави се</button>
+    `;
+    return;
+  }
+
+  // Show existing accepted matches as conversations
+  if (allConversations.length === 0) {
+    list.innerHTML = `
+      <div class="empty-inbox">
+        <div class="empty-inbox-icon">💬</div>
+        <div class="empty-inbox-text">Сè уште немаш активни разговори.<br>Прифати совпаѓање за да започнеш!</div>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = allConversations.map(c => `
+    <div class="inbox-card" onclick="openChat('${c.name}','${c.trade}')">
+      <div class="inbox-avatar">${c.initials}</div>
+      <div class="inbox-info">
+        <div class="inbox-name">${c.name}</div>
+        <div class="inbox-preview">${c.trade}</div>
+      </div>
+      <div class="inbox-time">${c.time}</div>
+      ${c.unread ? '<div class="inbox-unread"></div>' : ''}
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// PDF TRADE AGREEMENT
+// ============================================================
+const pdfTranslations = {
+  mk: {
+    title: 'Договор за размена',
+    party1: 'Страна 1', party2: 'Страна 2',
+    offer1: 'Нуди', offer2: 'Нуди',
+    topup: 'Доплата', terms: 'Услови',
+    termsText: 'Двете страни доброволно се согласуваат да ги разменат горенаведените предмети. Trampa.online служи само како посредник за комуникација и не е одговорна за состојбата на предметите.',
+    agreed: 'Договорено на'
+  },
+  sq: {
+    title: 'Marrëveshje shkëmbimi',
+    party1: 'Pala 1', party2: 'Pala 2',
+    offer1: 'Ofron', offer2: 'Ofron',
+    topup: 'Pagesë shtesë', terms: 'Kushtet',
+    termsText: 'Të dyja palët bien dakord vullnetarisht të shkëmbejnë artikujt e mësipërm. Trampa.online shërben vetëm si ndërmjetës komunikimi.',
+    agreed: 'Rënë dakord më'
+  },
+  en: {
+    title: 'Trade Agreement',
+    party1: 'Party 1', party2: 'Party 2',
+    offer1: 'Offers', offer2: 'Offers',
+    topup: 'Top-up payment', terms: 'Terms',
+    termsText: 'Both parties voluntarily agree to exchange the above items. Trampa.online serves only as a communication intermediary and is not responsible for the condition of items.',
+    agreed: 'Agreed on'
+  }
+};
+
+function openPdfModal() {
+  const t = pdfTranslations[currentLang] || pdfTranslations.mk;
+  const today = new Date().toLocaleDateString(currentLang === 'mk' ? 'mk' : currentLang === 'sq' ? 'sq' : 'en-GB');
+
+  document.getElementById('pdf-title').textContent = t.title;
+  document.getElementById('pdf-date').textContent = t.agreed + ' ' + today;
+  document.getElementById('pdf-party1-label').textContent = t.party1;
+  document.getElementById('pdf-party1').textContent = currentTrade.myName || '—';
+  document.getElementById('pdf-offer1-label').textContent = t.offer1;
+  document.getElementById('pdf-offer1').textContent = currentTrade.offer || '—';
+  document.getElementById('pdf-party2-label').textContent = t.party2;
+  document.getElementById('pdf-party2').textContent = currentTrade.partnerName || currentPartner.name || '—';
+  document.getElementById('pdf-offer2-label').textContent = t.offer2;
+  document.getElementById('pdf-offer2').textContent = currentTrade.want || '—';
+  document.getElementById('pdf-topup-label').textContent = t.topup;
+  document.getElementById('pdf-topup').textContent = currentTrade.topup || 'Рамна размена / Equal swap';
+  document.getElementById('pdf-terms-label').textContent = t.terms;
+  document.getElementById('pdf-terms').textContent = t.termsText;
+
+  document.getElementById('pdf-modal').classList.add('open');
+}
+
+function closePdfModal() {
+  document.getElementById('pdf-modal').classList.remove('open');
+}
+
+function printAgreement() {
+  window.print();
+}
+
 </script>
 </body>
 </html>
