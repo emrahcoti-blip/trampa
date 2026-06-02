@@ -1402,7 +1402,8 @@ button, .listing-card, .match-card, .inbox-card { transition: all .2s cubic-bezi
 // SUPABASE CONFIG — PASTE YOUR ANON KEY BELOW
 // ============================================================
 const SUPABASE_URL = 'https://cflntakqzldgkmznokde.supabase.co';
-const SUPABASE_KEY = 'Ysb_publishable_tPt_tIDUMveolTfSkjBNSg_llODT_vn'; //
+const SUPABASE_KEY = 'sb_publishable_tPt_tIDUMveolTfSkjBNSg_llODT_vn'; //
+
 // Load Supabase client
 let supabase = null;
 async function initSupabase() {
@@ -2540,7 +2541,7 @@ const pdfTranslations = {
     liability: 'Liability',
     liabilityText: 'Each party is responsible for the accuracy of the item description per Art. 459-460 of the Law on Obligations. The transferor guarantees ownership free of legal encumbrances.',
     jurisdiction: 'Jurisdiction',
-    jurisdictionText: "Any disputes shall be resolved before the competent Basic Court at the defendant's place of residence, per the Civil Procedure Law of North Macedonia (Official Gazette No. 79/2005). Trampa.online is not a contracting party.",
+    jurisdictionText: 'Any disputes shall be resolved before the Basic Court at the defendant place of residence, per Civil Procedure Law of North Macedonia (Gazette No. 79/2005). Trampa.online is not a contracting party.',
     platform: 'Platform role', platformText: 'Trampa.online is an intermediary service. It bears no liability for damages arising from the exchange, per Art. 141 of the Law on Obligations.',
     terms: 'Consent', termsText: 'Both parties enter this agreement voluntarily and confirm they have read all provisions.',
     agreed: 'Agreed on', sigA: 'Party A (signature)', sigB: 'Party B (signature)',
@@ -2759,7 +2760,7 @@ async function loadRealMatches() {
       '</div>' +
       '<div class="mc-actions">' +
         '<button class="mc-decline" onclick="this.closest('.match-card').style.display=\'none\'">Прескокни</button>' +
-        '<button class="mc-accept" onclick="startMatchChat('' + l.id + '\','' + name + '\','' + (l.offer||'').replace(/'/g,\'\\\'\'\') + '\','' + (l.want||'').replace(/'/g,\'\\\'\'\') + '\','' + l.user_id + '\')">💬 Започни размена</button>' +
+        '<button class="mc-accept" data-id="' + l.id + '" data-name="' + name.replace(/"/g,'') + '" data-uid="' + l.user_id + '" data-offer="' + (l.offer||'').replace(/"/g,'').substring(0,50) + '" data-want="' + (l.want||'').replace(/"/g,'').substring(0,50) + '" onclick="handleMatchAccept(event)">💬 Започни размена</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -2773,6 +2774,17 @@ async function startMatchChat(listingId, partnerName, offer, want, partnerId) {
   window._currentListingOffer = offer;
   window._currentListingWant = want;
   await startChatFromListing();
+}
+
+
+function handleMatchAccept(event) {
+  const btn = event.target;
+  const id = btn.dataset.id;
+  const name = btn.dataset.name;
+  const offer = btn.dataset.offer;
+  const want = btn.dataset.want;
+  const uid = btn.dataset.uid;
+  startMatchChat(id, name, offer, want, uid);
 }
 
 </script>
