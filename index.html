@@ -2234,7 +2234,7 @@ async function loadAdminListings() {
     .from('listings')
     .select('*, profiles(name)')
     .order('created_at', { ascending: false })
-    .limit(50);
+    .limit(100);
 
   const list = document.getElementById('admin-listings-list');
   if (error || !data || data.length === 0) {
@@ -2246,7 +2246,7 @@ async function loadAdminListings() {
     <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.title||l.offer||'—'}</div>
-        <div style="font-size:11px;color:var(--text3)">${l.profiles?.name||'?'} • ${l.category||'—'} • ${new Date(l.created_at).toLocaleDateString('mk')}</div>
+        <div style="font-size:11px;color:var(--text3)">${l.profiles?.name||'?'} • ${l.category||'—'} • ${new Date(l.created_at).toLocaleDateString('mk')} ${l.status !== 'active' ? '<span style=\"color:var(--danger);font-weight:500\">['+l.status+']</span>' : ''}</div>
         <div style="font-size:11px;color:var(--text2)">${(l.offer||'')+'  ⇄  '+(l.want||'')}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
@@ -2284,9 +2284,21 @@ async function loadAdminUsers() {
 
 async function adminDeleteListing(id) {
   if (!confirm('Сигурно сакаш да го избришеш овој оглас?')) return;
-  const { error } = await supabase.from('listings').delete().eq('id', id);
-  if (error) showToast('❌ Грешка: ' + error.message);
-  else { showToast('✅ Огласот е избришан'); loadAdminListings(); loadAdminStats(); }
+  // Admin soft-delete: mark as 'deleted' status (bypasses RLS ownership check)
+  const { error } = await supabase
+    .from('listings')
+    .update({ status: 'deleted' })
+    .eq('id', id);
+  if (error) {
+    // Try hard delete as fallback
+    const { error: err2 } = await supabase.from('listings').delete().eq('id', id);
+    if (err2) showToast('❌ Грешка: ' + err2.message);
+    else { showToast('✅ Огласот е избришан'); loadAdminListings(); loadAdminStats(); }
+  } else {
+    showToast('✅ Огласот е отстранет од листата');
+    loadAdminListings();
+    loadAdminStats();
+  }
 }
 
 // ============================================================
@@ -2351,6 +2363,145 @@ function checkRoute() {
   }
 }
 window.addEventListener('hashchange', checkRoute);
+
+
+// ============================================================
+// PDF TRADE AGREEMENT
+// ============================================================
+const pdfTranslations = {
+  mk: {
+    title: 'Договор за размена на предмети',
+    subtitle: 'Склучен врз основа на Законот за облигациони односи на РСМ (Сл. весник бр. 18/2001)',
+    party1: 'Страна А (Огласувач)', party2: 'Страна Б (Заинтересиран)',
+    offer1: 'Предмет кој го нуди Страна А',
+    offer2: 'Предмет кој го нуди Страна Б',
+    topup: 'Доплата (парична разлика)',
+    delivery: 'Начин на предавање',
+    deliveryVal: 'По договор меѓу страните, лично предавање',
+    liability: 'Одговорност',
+    liabilityText: 'Секоја страна е одговорна за точноста на описот на предметот кој го нуди, согласно чл. 459 и 460 од ЗОО. Предавачот гарантира дека предметот е негова сопственост и не е оптоварен со долгови или правни спорови.',
+    jurisdiction: 'Надлежност',
+    jurisdictionText: 'За евентуални спорови надлежен е основниот суд според местото на живеење на тужениот, согласно Законот за парничната постапка на РСМ (Сл. весник бр. 79/2005). Trampa.online е информациска платформа и не е договорна страна.',
+    platform: 'Улога на платформата',
+    platformText: 'Trampa.online е посреднички информациски сервис. Не е страна во договорот и не е одговорна за штети кои произлегуваат од размената, согласно чл. 141 од ЗОО.',
+    terms: 'Согласност',
+    termsText: 'Двете страни доброволно и свесно го склучуваат овој договор и потврдуваат дека ги прочитале сите одредби.',
+    agreed: 'Договорено на',
+    sigA: 'Страна А (потпис)',
+    sigB: 'Страна Б (потпис)',
+    disclaimer: 'Овој документ е генериран автоматски преку Trampa.online и претставува приватен договор. За правна сила, препорачуваме нотарска заверка согласно ЗВП.'
+  },
+  sq: {
+    title: 'Marrëveshje e shkëmbimit të sendeve',
+    subtitle: 'Bazuar në Ligjin për Marrëdhënie Detyrimesh të RSM (Gaz. Zyrtare nr. 18/2001)',
+    party1: 'Pala A (Shpallësi)', party2: 'Pala B (I interesuari)',
+    offer1: 'Sendi i ofruar nga Pala A', offer2: 'Sendi i ofruar nga Pala B',
+    topup: 'Pagesë shtesë (diferenca monetare)',
+    delivery: 'Mënyra e dorëzimit', deliveryVal: 'Me marrëveshje mes palëve, dorëzim personal',
+    liability: 'Përgjegjësia',
+    liabilityText: 'Secila palë është përgjegjëse për saktësinë e përshkrimit sipas nenit 459-460 të LMD. Dorëzuesi garanton pronësinë e sendit pa barrë ligjore.',
+    jurisdiction: 'Juridiksioni',
+    jurisdictionText: 'Mosmarrëveshjet zgjidhen në gjykatën themelore sipas vendbanimit të të paditurit, sipas LPP të RSM. Trampa.online nuk është palë kontraktuese.',
+    platform: 'Roli i platformës', platformText: 'Trampa.online është shërbim ndërmjetës. Nuk mban përgjegjësi ligjore për dëmet nga shkëmbimi.',
+    terms: 'Pëlqimi', termsText: 'Të dyja palët lidhin këtë marrëveshje vullnetarisht dhe me vetëdije të plotë.',
+    agreed: 'Rënë dakord më', sigA: 'Pala A (nënshkrim)', sigB: 'Pala B (nënshkrim)',
+    disclaimer: 'Ky dokument është gjeneruar automatikisht nga Trampa.online. Për fuqi ligjore, rekomandohet vërtetim noterial.'
+  },
+  en: {
+    title: 'Item Trade Agreement',
+    subtitle: 'Concluded under the Law on Obligations of North Macedonia (Official Gazette No. 18/2001)',
+    party1: 'Party A (Advertiser)', party2: 'Party B (Interested party)',
+    offer1: 'Item offered by Party A', offer2: 'Item offered by Party B',
+    topup: 'Top-up payment (monetary difference)',
+    delivery: 'Method of handover', deliveryVal: 'By mutual agreement, in-person handover',
+    liability: 'Liability',
+    liabilityText: 'Each party is responsible for the accuracy of the item description per Art. 459-460 of the Law on Obligations. The transferor guarantees ownership free of legal encumbrances.',
+    jurisdiction: 'Jurisdiction',
+    jurisdictionText: "Any disputes shall be resolved before the competent Basic Court at the defendant's place of residence, per the Civil Procedure Law of North Macedonia (Official Gazette No. 79/2005). Trampa.online is not a contracting party.",
+    platform: 'Platform role', platformText: 'Trampa.online is an intermediary service. It bears no liability for damages arising from the exchange, per Art. 141 of the Law on Obligations.',
+    terms: 'Consent', termsText: 'Both parties enter this agreement voluntarily and confirm they have read all provisions.',
+    agreed: 'Agreed on', sigA: 'Party A (signature)', sigB: 'Party B (signature)',
+    disclaimer: 'This document was auto-generated by Trampa.online. For full legal enforceability, notarial certification is recommended.'
+  }
+};
+
+function openPdfModal() {
+  const t = pdfTranslations[currentLang] || pdfTranslations.mk;
+  const today = new Date().toLocaleDateString(currentLang === 'mk' ? 'mk-MK' : currentLang === 'sq' ? 'sq-AL' : 'en-GB');
+  const agreementNum = 'TRP-' + Date.now().toString().slice(-8);
+  const box = document.getElementById('pdf-box-content');
+  if (!box) return;
+
+  box.innerHTML =
+    '<div style="text-align:center;margin-bottom:1rem;padding-bottom:1rem;border-bottom:2px solid var(--primary)">' +
+      '<div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--earth)">' + t.title + '</div>' +
+      '<div style="font-size:11px;color:var(--text3);margin-top:3px">' + t.subtitle + '</div>' +
+      '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + t.agreed + ': ' + today + ' | ' + agreementNum + '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">' +
+      '<div class="pdf-section">' +
+        '<div class="pdf-label">' + t.party1 + '</div>' +
+        '<div class="pdf-val">' + (currentTrade.myName || '—') + '</div>' +
+        '<div style="font-size:11px;color:var(--text3);margin-top:4px">' + t.offer1 + ':</div>' +
+        '<div style="font-size:12px;font-weight:500;color:var(--text)">' + (currentTrade.offer || '—') + '</div>' +
+      '</div>' +
+      '<div class="pdf-section" style="border-color:var(--primary-light)">' +
+        '<div class="pdf-label">' + t.party2 + '</div>' +
+        '<div class="pdf-val">' + (currentTrade.partnerName || currentPartner.name || '—') + '</div>' +
+        '<div style="font-size:11px;color:var(--text3);margin-top:4px">' + t.offer2 + ':</div>' +
+        '<div style="font-size:12px;font-weight:500;color:var(--text)">' + (currentTrade.want || '—') + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="pdf-section" style="margin-bottom:10px">' +
+      '<div class="pdf-label">' + t.topup + '</div>' +
+      '<div class="pdf-val">' + (currentTrade.topup || 'Рамна размена / Equal swap') + '</div>' +
+    '</div>' +
+    '<div class="pdf-section" style="margin-bottom:10px">' +
+      '<div class="pdf-label">' + t.delivery + '</div>' +
+      '<div class="pdf-val" style="font-size:12px;font-weight:400">' + t.deliveryVal + '</div>' +
+    '</div>' +
+    '<div class="pdf-section" style="margin-bottom:10px;background:#FFF9F0">' +
+      '<div class="pdf-label">⚖️ ' + t.liability + '</div>' +
+      '<div style="font-size:11px;line-height:1.65;color:var(--text2);margin-top:4px">' + t.liabilityText + '</div>' +
+    '</div>' +
+    '<div class="pdf-section" style="margin-bottom:10px;background:#F0F4FF">' +
+      '<div class="pdf-label">🏛️ ' + t.jurisdiction + '</div>' +
+      '<div style="font-size:11px;line-height:1.65;color:var(--text2);margin-top:4px">' + t.jurisdictionText + '</div>' +
+    '</div>' +
+    '<div class="pdf-section" style="margin-bottom:10px">' +
+      '<div class="pdf-label">🌐 ' + t.platform + '</div>' +
+      '<div style="font-size:11px;line-height:1.65;color:var(--text2);margin-top:4px">' + t.platformText + '</div>' +
+    '</div>' +
+    '<div class="pdf-section" style="margin-bottom:1rem">' +
+      '<div class="pdf-label">' + t.terms + '</div>' +
+      '<div style="font-size:11px;line-height:1.65;margin-top:4px">' + t.termsText + '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">' +
+      '<div style="border-top:1px solid var(--text);padding-top:6px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--text3)">' + t.sigA + '</div>' +
+        '<div style="height:40px"></div>' +
+        '<div style="font-size:11px;color:var(--text3)">' + (currentTrade.myName || '—') + '</div>' +
+      '</div>' +
+      '<div style="border-top:1px solid var(--text);padding-top:6px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--text3)">' + t.sigB + '</div>' +
+        '<div style="height:40px"></div>' +
+        '<div style="font-size:11px;color:var(--text3)">' + (currentTrade.partnerName || currentPartner.name || '—') + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:#FFFBEC;border:1px solid #E8C94A;border-radius:8px;padding:8px 12px;font-size:11px;color:#7A6010;line-height:1.5">' +
+      '⚠️ ' + t.disclaimer +
+    '</div>';
+
+  document.getElementById('pdf-modal').classList.add('open');
+}
+
+function closePdfModal() {
+  document.getElementById('pdf-modal').classList.remove('open');
+}
+
+function printAgreement() {
+  window.print();
+}
 
 </script>
 </body>
