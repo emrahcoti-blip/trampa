@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trampa.online — Твоето го наоѓа своето</title>
+<title>Trampa.mk — Твоето наоѓа своето</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -2759,8 +2759,8 @@ async function loadRealMatches() {
         '<div class="cb-track"><div class="cb-fill" style="width:' + score + '%;background:' + scoreColor + '"></div></div>' +
       '</div>' +
       '<div class="mc-actions">' +
-        '<button class="mc-decline" onclick="this.closest('.match-card').style.display=\'none\'">Прескокни</button>' +
-        '<button class="mc-accept" data-id="' + l.id + '" data-name="' + name.replace(/"/g,'') + '" data-uid="' + l.user_id + '" data-offer="' + (l.offer||'').replace(/"/g,'').substring(0,50) + '" data-want="' + (l.want||'').replace(/"/g,'').substring(0,50) + '" onclick="handleMatchAccept(event)">💬 Започни размена</button>' +
+        '<button class="mc-decline" onclick="this.parentNode.parentNode.remove()">Прескокни</button>' +
+        '<button class="mc-accept" data-id="' + l.id + '" data-name="' + name.replace(/"/g,"") + '" data-uid="' + l.user_id + '" data-offer="' + (l.offer||"").replace(/"/g,"").substring(0,50) + '" data-want="' + (l.want||"").replace(/"/g,"").substring(0,50) + '" onclick="handleMatchAccept(event)">💬 Започни размена</button>' +
       '</div>' +
     '</div>';
   }).join('');
