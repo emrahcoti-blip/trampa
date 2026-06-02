@@ -1308,6 +1308,7 @@ input, select, textarea { font-family: var(--font-body); }
 // ============================================================
 const SUPABASE_URL = 'https://cflntakqzldgkmznokde.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tPt_tIDUMveolTfSkjBNSg_llODT_vn'; //
+
 // Load Supabase client
 let supabase = null;
 async function initSupabase() {
@@ -2201,6 +2202,12 @@ async function checkAdmin() {
 }
 
 async function goToAdmin() {
+  // Wait for supabase to init if needed
+  if (!supabase) {
+    try { await initSupabase(); } catch(e) {}
+  }
+  // Small delay to ensure session is loaded
+  await new Promise(r => setTimeout(r, 500));
   const isAdmin = await checkAdmin();
   if (!isAdmin) { showToast('⛔ Немаш пристап'); return; }
   goTo('admin');
@@ -2338,7 +2345,10 @@ async function saveEdit() {
 
 // ── Secret admin route ────────────────────────────────────────
 function checkRoute() {
-  if (window.location.hash === '#admin') goToAdmin();
+  if (window.location.hash === '#admin') {
+    // Wait for page to fully load before checking admin
+    setTimeout(() => goToAdmin(), 1000);
+  }
 }
 window.addEventListener('hashchange', checkRoute);
 
