@@ -1219,6 +1219,7 @@ input, select, textarea { font-family: var(--font-body); }
 // ============================================================
 const SUPABASE_URL = 'https://cflntakqzldgkmznokde.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tPt_tIDUMveolTfSkjBNSg_llODT_vn'; //
+
 // Load Supabase client
 let supabase = null;
 async function initSupabase() {
@@ -1431,6 +1432,16 @@ async function openDetailReal(id) {
   if (!l) return;
   const catEmojis = { vozila:'🚗', elektronika:'📱', nekretnini:'🏠', obleka:'👕', sport:'⚽', dom:'🛋' };
   const catColors = { vozila:'#EDF2E8', elektronika:'#EEF0F8', nekretnini:'#F5EEE8' };
+  // Store listing data globally for chat
+  window._currentListingId = l.id;
+  window._currentListingUserId = l.user_id;
+  window._currentListingUserName = l.profiles?.name || 'Корисник';
+  window._currentListingOffer = l.offer;
+  window._currentListingWant = l.want;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const isOwner = session?.user?.id === l.user_id;
+
   document.getElementById('detail-content').innerHTML = `
     <button class="back-btn" onclick="goTo('home');loadListings()">← Назад</button>
     <div class="detail-card">
@@ -1448,7 +1459,7 @@ async function openDetailReal(id) {
             <div class="dt-arrow">⇄</div>
             <div class="dt-box" style="border-color:var(--primary-light)"><div class="dt-box-label">Бара</div><div class="dt-box-val" style="color:var(--primary-dark)">${l.want}</div></div>
           </div>
-          ${l.topup_amt ? `<span class="topup-tag">💰 €${l.topup_amt} ${l.topup_dir === 'me' ? 'доплаќа огласувачот' : 'доплаќаш ти'}</span>` : ''}
+          ${l.topup_amt ? '<span class="topup-tag">💰 €'+l.topup_amt+' '+(l.topup_dir === 'me' ? 'доплаќа огласувачот' : 'доплаќаш ти')+'</span>' : ''}
         </div>
         <p class="detail-desc">${l.description||''}</p>
       </div>
@@ -1465,7 +1476,10 @@ async function openDetailReal(id) {
     </div>
     <div class="detail-actions">
       <button class="btn-secondary" onclick="showToast('📞 Достапно по верификација')">📞 Покажи број</button>
-      <button class="btn-primary" onclick="startChatFromListing()">💬 Пишувај порака</button>
+      ${isOwner 
+        ? '<button class="btn-primary" style="background:var(--text3);cursor:default">📋 Твој оглас</button>'
+        : '<button class="btn-primary" onclick="startChatFromListing()">💬 Започни размена</button>'
+      }
     </div>
   `;
   goTo('detail');
@@ -1812,113 +1826,207 @@ initSupabase().catch(err => {
 });
 
 // ============================================================
-// CHAT SYSTEM
+// CHAT SYSTEM — FULLY DATABASE-BACKED WITH REALTIME
 // ============================================================
 let currentChatId = null;
 let currentPartner = {};
 let currentTrade = {};
 let chatSubscription = null;
 let allConversations = [];
+let currentUserId = null;
+let currentUserName = null;
 
-async function acceptMatch(btn, partnerName, offer, want, topup) {
+// ── Start chat from a real listing ──────────────────────────
+async function startChatFromListing() {
   if (!isLoggedIn) { openAuth(); return; }
-  if (!supabase) { showToast('⏳ Се поврзувам...'); return; }
-
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { openAuth(); return; }
 
-  const myName = session.user.user_metadata?.full_name || session.user.email;
-  const chatId = 'chat_' + Date.now();
+  const listingUserId = window._currentListingUserId;
+  const listingUserName = window._currentListingUserName || 'Корисник';
+  const offer = window._currentListingOffer || '—';
+  const want = window._currentListingWant || '—';
+  const listingId = window._currentListingId || null;
 
-  // Save conversation to DB
-  const { error } = await supabase.from('messages').insert({
-    listing_id: null,
-    from_id: session.user.id,
-    to_id: session.user.id,
-    body: '__SYSTEM__:Размената е прифатена. Започни разговор!',
-  });
+  currentUserId = session.user.id;
+  currentUserName = session.user.user_metadata?.full_name || session.user.email;
+
+  // Create a deterministic chat ID from both user IDs
+  const ids = [session.user.id, listingUserId || 'guest'].sort();
+  const chatId = 'chat_' + ids[0].slice(0,8) + '_' + ids[1].slice(0,8) + '_' + (listingId || Date.now()).toString().slice(-6);
 
   currentChatId = chatId;
-  currentPartner = { name: partnerName, initials: partnerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) };
-  currentTrade = { offer, want, topup, myName, partnerName };
+  currentPartner = {
+    id: listingUserId,
+    name: listingUserName,
+    initials: listingUserName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+  };
+  currentTrade = { offer, want, myName: currentUserName, partnerName: listingUserName, topup: 'По договор' };
 
-  openChat(partnerName, offer + ' ⇄ ' + want);
+  // Save conversation record
+  await supabase.from('conversations').upsert({
+    id: chatId,
+    user_a: session.user.id,
+    user_b: listingUserId || session.user.id,
+    user_a_name: currentUserName,
+    user_b_name: listingUserName,
+    listing_id: listingId,
+    offer, want,
+    topup: 'По договор',
+    last_message: '',
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'id' });
+
+  openChatScreen(listingUserName, offer + ' ⇄ ' + want);
+}
+
+// ── Accept match and start chat ──────────────────────────────
+async function acceptMatch(btn, partnerName, offer, want, topup) {
+  if (!isLoggedIn) { openAuth(); return; }
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { openAuth(); return; }
+
+  currentUserId = session.user.id;
+  currentUserName = session.user.user_metadata?.full_name || session.user.email;
+
+  const chatId = 'chat_match_' + session.user.id.slice(0,8) + '_' + Date.now().toString().slice(-6);
+  currentChatId = chatId;
+  currentPartner = {
+    id: null,
+    name: partnerName,
+    initials: partnerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+  };
+  currentTrade = { offer, want, myName: currentUserName, partnerName, topup };
+
+  // Add to local conversations
+  allConversations.unshift({
+    id: chatId, name: partnerName,
+    initials: currentPartner.initials,
+    trade: offer + ' ⇄ ' + want,
+    time: new Date().toLocaleTimeString('mk', {hour:'2-digit',minute:'2-digit'}),
+    unread: false
+  });
+
+  openChatScreen(partnerName, offer + ' ⇄ ' + want);
   showToast('✅ Размената е прифатена!');
 }
 
-function openChat(partnerName, tradeSummary) {
-  const initials = partnerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('chat-avatar').textContent = initials;
+// ── Open the chat screen ─────────────────────────────────────
+async function openChatScreen(partnerName, tradeSummary) {
+  document.getElementById('chat-avatar').textContent = 
+    partnerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('chat-partner-name').textContent = partnerName;
   document.getElementById('chat-trade-summary').textContent = tradeSummary;
 
-  // Clear messages and show welcome
   const msgs = document.getElementById('chat-messages');
-  msgs.innerHTML = `
-    <div class="msg-system">💬 Размената е прифатена — ${new Date().toLocaleDateString('mk')}</div>
-    <div class="msg-system">Договорете ги деталите и генерирајте договор кога сте подготвени</div>
-  `;
+  msgs.innerHTML = '<div class="msg-system">💬 ' + new Date().toLocaleDateString('mk') + '</div>';
 
   goTo('chat');
+
+  // Load existing messages
+  await loadMessages();
+
+  // Subscribe to realtime
   subscribeToChat();
 }
 
+// ── Load messages from DB ────────────────────────────────────
+async function loadMessages() {
+  if (!supabase || !currentChatId) return;
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('chat_id', currentChatId)
+    .order('created_at', { ascending: true });
+
+  if (error) { console.error('Load messages error:', error); return; }
+  if (!data || data.length === 0) {
+    appendSystemMessage('Започнете го разговорот!');
+    return;
+  }
+  data.forEach(msg => {
+    const isMine = msg.from_id === currentUserId;
+    const time = new Date(msg.created_at).toLocaleTimeString('mk', {hour:'2-digit',minute:'2-digit'});
+    appendMessage(msg.body, time, isMine);
+  });
+}
+
+// ── Subscribe to realtime messages ──────────────────────────
 function subscribeToChat() {
   if (!supabase || !currentChatId) return;
-  // Unsubscribe from previous
-  if (chatSubscription) chatSubscription.unsubscribe();
+  if (chatSubscription) { supabase.removeChannel(chatSubscription); }
 
-  // For demo: use Supabase realtime on messages table
   chatSubscription = supabase
-    .channel('chat-' + currentChatId)
-    .on('broadcast', { event: 'message' }, (payload) => {
-      appendMessage(payload.payload.text, payload.payload.sender, payload.payload.time, false);
+    .channel('messages_' + currentChatId)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: 'chat_id=eq.' + currentChatId
+    }, (payload) => {
+      const msg = payload.new;
+      if (msg.from_id === currentUserId) return; // already shown
+      const time = new Date(msg.created_at).toLocaleTimeString('mk', {hour:'2-digit',minute:'2-digit'});
+      appendMessage(msg.body, time, false);
     })
     .subscribe();
 }
 
+// ── Send a message ───────────────────────────────────────────
 async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || !currentChatId) return;
   input.value = '';
-  input.style.height = 'auto';
 
-  const now = new Date().toLocaleTimeString('mk', { hour: '2-digit', minute: '2-digit' });
-  appendMessage(text, 'me', now, true);
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { showToast('⚠️ Пријави се за да испраќаш пораки'); return; }
 
-  // Broadcast to channel for real-time
-  if (supabase && currentChatId) {
-    await supabase.channel('chat-' + currentChatId).send({
-      type: 'broadcast',
-      event: 'message',
-      payload: { text, sender: currentPartner.name, time: now }
-    });
+  const time = new Date().toLocaleTimeString('mk', {hour:'2-digit',minute:'2-digit'});
+  appendMessage(text, time, true); // optimistic UI
+
+  const { error } = await supabase.from('messages').insert({
+    chat_id: currentChatId,
+    from_id: session.user.id,
+    from_name: currentUserName || session.user.email,
+    body: text
+  });
+
+  if (error) {
+    showToast('❌ Пораката не е испратена: ' + error.message);
+    console.error(error);
+  } else {
+    // Update conversation last message
+    await supabase.from('conversations').update({
+      last_message: text,
+      updated_at: new Date().toISOString()
+    }).eq('id', currentChatId);
   }
 }
 
-function appendMessage(text, sender, time, isMine) {
+// ── Append message bubble ────────────────────────────────────
+function appendMessage(text, time, isMine) {
   const msgs = document.getElementById('chat-messages');
   const wrap = document.createElement('div');
   wrap.className = 'msg-wrap ' + (isMine ? 'mine' : 'theirs');
-  wrap.innerHTML = `
-    <div class="msg-bubble">${text}</div>
-    <div class="msg-time">${time}</div>
-  `;
+  wrap.innerHTML = `<div class="msg-bubble">${text}</div><div class="msg-time">${time}</div>`;
   msgs.appendChild(wrap);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-function handleChatKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
+function appendSystemMessage(text) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg-system';
+  div.textContent = text;
+  msgs.appendChild(div);
 }
 
-// ============================================================
-// INBOX
-// ============================================================
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+// ── Load inbox ───────────────────────────────────────────────
 async function loadInbox() {
   const list = document.getElementById('inbox-list');
   if (!isLoggedIn || !supabase) {
@@ -1927,199 +2035,66 @@ async function loadInbox() {
         <div class="empty-inbox-icon">🔒</div>
         <div class="empty-inbox-text">Пријави се за да ги видиш твоите пораки</div>
       </div>
-      <button class="btn-primary" onclick="openAuth()" style="width:100%;justify-content:center;margin-top:1rem">Пријави се</button>
-    `;
+      <button class="btn-primary" onclick="openAuth()" style="width:100%;justify-content:center;margin-top:1rem">Пријави се</button>`;
     return;
   }
 
-  // Show existing accepted matches as conversations
-  if (allConversations.length === 0) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  const { data, error } = await supabase
+    .from('conversations')
+    .select('*')
+    .or('user_a.eq.' + session.user.id + ',user_b.eq.' + session.user.id)
+    .order('updated_at', { ascending: false });
+
+  if (error || !data || data.length === 0) {
     list.innerHTML = `
       <div class="empty-inbox">
         <div class="empty-inbox-icon">💬</div>
-        <div class="empty-inbox-text">Сè уште немаш активни разговори.<br>Прифати совпаѓање за да започнеш!</div>
-      </div>
-    `;
+        <div class="empty-inbox-text">Сè уште немаш активни разговори.<br>Кликни "Пишувај порака" на некој оглас!</div>
+      </div>`;
     return;
   }
 
-  list.innerHTML = allConversations.map(c => `
-    <div class="inbox-card" onclick="openChat('${c.name}','${c.trade}')">
-      <div class="inbox-avatar">${c.initials}</div>
-      <div class="inbox-info">
-        <div class="inbox-name">${c.name}</div>
-        <div class="inbox-preview">${c.trade}</div>
-      </div>
-      <div class="inbox-time">${c.time}</div>
-      ${c.unread ? '<div class="inbox-unread"></div>' : ''}
-    </div>
-  `).join('');
+  list.innerHTML = data.map(c => {
+    const isA = c.user_a === session.user.id;
+    const partnerName = isA ? c.user_b_name : c.user_a_name;
+    const initials = (partnerName||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const time = new Date(c.updated_at).toLocaleTimeString('mk', {hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="inbox-card" onclick="resumeChat('${c.id}','${partnerName}','${c.offer||''}','${c.want||''}','${c.topup||''}','${isA ? c.user_b : c.user_a}')">
+        <div class="inbox-avatar">${initials}</div>
+        <div class="inbox-info">
+          <div class="inbox-name">${partnerName||'Корисник'}</div>
+          <div class="inbox-preview">${c.last_message || c.offer + ' ⇄ ' + c.want}</div>
+        </div>
+        <div class="inbox-time">${time}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Resume an existing chat from inbox ──────────────────────
+async function resumeChat(chatId, partnerName, offer, want, topup, partnerId) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  currentUserId = session.user.id;
+  currentUserName = session.user.user_metadata?.full_name || session.user.email;
+  currentChatId = chatId;
+  currentPartner = {
+    id: partnerId,
+    name: partnerName,
+    initials: partnerName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+  };
+  currentTrade = { offer, want, myName: currentUserName, partnerName, topup };
+  openChatScreen(partnerName, offer + ' ⇄ ' + want);
 }
 
 // ============================================================
 // PDF TRADE AGREEMENT
 // ============================================================
-const pdfTranslations = {
-  mk: {
-    title: 'Договор за размена на предмети',
-    subtitle: 'Склучен врз основа на Законот за облигациони односи на РСМ',
-    party1: 'Страна А (Огласувач)', party2: 'Страна Б (Заинтересиран)',
-    offer1: 'Предмет кој го нуди Страна А',
-    offer2: 'Предмет кој го нуди Страна Б',
-    condition1: 'Опис и состојба',
-    topup: 'Доплата (парична разлика)',
-    delivery: 'Начин и место на предавање',
-    deliveryVal: 'По договор меѓу страните, лично предавање',
-    liability: 'Одговорност',
-    liabilityText: 'Секоја страна е одговорна за точноста на описот на предметот кој го нуди, согласно чл. 459 и 460 од Законот за облигациони односи (ЗОО, Сл. весник на РМ бр. 18/2001). Предавачот гарантира дека предметот е негова сопственост и дека не е оптоварен со долгови или правни спорови.',
-    jurisdiction: 'Надлежност',
-    jurisdictionText: 'За евентуални спорови кои произлегуваат од овој договор, надлежен е основниот суд според местото на живеење на тужениот, согласно Законот за парничната постапка на РСМ (Сл. весник бр. 79/2005). Трамpa.online е информациска платформа и не е договорна страна — не сноси правна одговорност за спорови меѓу корисниците.',
-    platform: 'Улога на платформата',
-    platformText: 'Trampa.online (trampa.online) е посреднички информациски сервис кој ги поврзува корисниците. Платформата не е страна во договорот, не верификува физички состојби на предметите и не е одговорна за штети кои произлегуваат од размената, согласно чл. 141 од ЗОО.',
-    terms: 'Согласност',
-    termsText: 'Двете страни доброволно и свесно склучуваат овој договор. Со прифаќањето на договорот потврдуваат дека ги прочитале и разбрале сите одредби.',
-    agreed: 'Договорено на',
-    signature: 'Потписи на страните',
-    sigA: 'Страна А (потпис/парафирање)',
-    sigB: 'Страна Б (потпис/парафирање)',
-    disclaimer: '⚠️ Овој документ е генериран автоматски преку Trampa.online и претставува приватен договор. За правна сила при судски постапки, препорачуваме нотарска заверка согласно Законот за вонсудска постапка (ЗВП).'
-  },
-  sq: {
-    title: 'Marrëveshje e shkëmbimit të sendeve',
-    subtitle: 'Bazuar në Ligjin për Marrëdhënie Detyrimesh të RSM',
-    party1: 'Pala A (Shpallësi)', party2: 'Pala B (I interesuari)',
-    offer1: 'Sendi i ofruar nga Pala A',
-    offer2: 'Sendi i ofruar nga Pala B',
-    condition1: 'Përshkrimi dhe gjendja',
-    topup: 'Pagesë shtesë (diferenca monetare)',
-    delivery: 'Mënyra dhe vendi i dorëzimit',
-    deliveryVal: 'Me marrëveshje mes palëve, dorëzim personal',
-    liability: 'Përgjegjësia',
-    liabilityText: 'Secila palë është përgjegjëse për saktësinë e përshkrimit të sendit sipas nenit 459 dhe 460 të Ligjit për Marrëdhënie Detyrimesh (LMD). Dorëzuesi garanton pronësinë e sendit pa barrë ligjore.',
-    jurisdiction: 'Juridiksioni',
-    jurisdictionText: 'Për mosmarrëveshjet eventuale, kompetent është gjykata themelore sipas vendbanimit të të paditurit, sipas LPP të RSM. Trampa.online është platformë informative dhe nuk është palë kontraktuese.',
-    platform: 'Roli i platformës',
-    platformText: 'Trampa.online është shërbim ndërmjetës informativ. Platforma nuk është palë në kontratë dhe nuk mban përgjegjësi ligjore për dëmet nga shkëmbimi.',
-    terms: 'Pëlqimi',
-    termsText: 'Të dyja palët lidhin këtë marrëveshje vullnetarisht dhe me vetëdije të plotë.',
-    agreed: 'Rënë dakord më',
-    signature: 'Nënshkrimet e palëve',
-    sigA: 'Pala A (nënshkrim)',
-    sigB: 'Pala B (nënshkrim)',
-    disclaimer: '⚠️ Ky dokument është gjeneruar automatikisht nga Trampa.online. Për fuqi ligjore, rekomandohet vërtetim noterial.'
-  },
-  en: {
-    title: 'Item Trade Agreement',
-    subtitle: 'Concluded under the Law on Obligations of North Macedonia',
-    party1: 'Party A (Advertiser)', party2: 'Party B (Interested party)',
-    offer1: 'Item offered by Party A',
-    offer2: 'Item offered by Party B',
-    condition1: 'Description and condition',
-    topup: 'Top-up payment (monetary difference)',
-    delivery: 'Method and place of handover',
-    deliveryVal: 'By mutual agreement, in-person handover',
-    liability: 'Liability',
-    liabilityText: 'Each party is responsible for the accuracy of the item description per Art. 459-460 of the Law on Obligations (Official Gazette No. 18/2001). The transferor guarantees ownership free of legal encumbrances.',
-    jurisdiction: 'Jurisdiction',
-    jurisdictionText: 'Any disputes arising from this agreement shall be resolved before the competent Basic Court at the defendant\'s place of residence, per the Civil Procedure Law of North Macedonia (Official Gazette No. 79/2005). Trampa.online is an information platform and is not a contracting party — it bears no legal liability for disputes between users.',
-    platform: 'Platform role',
-    platformText: 'Trampa.online is an intermediary information service connecting users. The platform is not a party to this contract and bears no liability for damages arising from the exchange, per Art. 141 of the Law on Obligations.',
-    terms: 'Consent',
-    termsText: 'Both parties enter this agreement voluntarily and confirm they have read and understood all provisions.',
-    agreed: 'Agreed on',
-    signature: 'Signatures of parties',
-    sigA: 'Party A (signature)',
-    sigB: 'Party B (signature)',
-    disclaimer: '⚠️ This document was auto-generated by Trampa.online and constitutes a private agreement. For full legal enforceability, notarial certification is recommended per North Macedonian law.'
-  }
-};
 
-function openPdfModal() {
-  const t = pdfTranslations[currentLang] || pdfTranslations.mk;
-  const today = new Date().toLocaleDateString(currentLang === 'mk' ? 'mk-MK' : currentLang === 'sq' ? 'sq-AL' : 'en-GB');
-  const agreementNum = 'TRP-' + Date.now().toString().slice(-8);
-
-  const box = document.getElementById('pdf-box-content');
-  box.innerHTML = `
-    <div style="text-align:center;margin-bottom:1rem;padding-bottom:1rem;border-bottom:2px solid var(--primary)">
-      <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--earth)">${t.title}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:3px">${t.subtitle}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px">${t.agreed}: ${today} &nbsp;|&nbsp; Бр./No.: ${agreementNum}</div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <div class="pdf-section">
-        <div class="pdf-label">${t.party1}</div>
-        <div class="pdf-val">${currentTrade.myName || '—'}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">${t.offer1}:</div>
-        <div style="font-size:12px;color:var(--text);font-weight:500">${currentTrade.offer || '—'}</div>
-      </div>
-      <div class="pdf-section" style="border-color:var(--primary-light)">
-        <div class="pdf-label">${t.party2}</div>
-        <div class="pdf-val">${currentTrade.partnerName || currentPartner.name || '—'}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">${t.offer2}:</div>
-        <div style="font-size:12px;color:var(--text);font-weight:500">${currentTrade.want || '—'}</div>
-      </div>
-    </div>
-
-    <div class="pdf-section" style="margin-bottom:10px">
-      <div class="pdf-label">${t.topup}</div>
-      <div class="pdf-val">${currentTrade.topup || 'Рамна размена'}</div>
-    </div>
-
-    <div class="pdf-section" style="margin-bottom:10px">
-      <div class="pdf-label">${t.delivery}</div>
-      <div class="pdf-val" style="font-size:12px;font-weight:400">${t.deliveryVal}</div>
-    </div>
-
-    <div class="pdf-section" style="margin-bottom:10px;background:#FFF9F0">
-      <div class="pdf-label">⚖️ ${t.liability}</div>
-      <div class="pdf-val" style="font-size:11px;font-weight:400;line-height:1.65;color:var(--text2)">${t.liabilityText}</div>
-    </div>
-
-    <div class="pdf-section" style="margin-bottom:10px;background:#F0F4FF">
-      <div class="pdf-label">🏛️ ${t.jurisdiction}</div>
-      <div class="pdf-val" style="font-size:11px;font-weight:400;line-height:1.65;color:var(--text2)">${t.jurisdictionText}</div>
-    </div>
-
-    <div class="pdf-section" style="margin-bottom:10px">
-      <div class="pdf-label">🌐 ${t.platform}</div>
-      <div class="pdf-val" style="font-size:11px;font-weight:400;line-height:1.65;color:var(--text2)">${t.platformText}</div>
-    </div>
-
-    <div class="pdf-section" style="margin-bottom:1rem">
-      <div class="pdf-label">${t.terms}</div>
-      <div class="pdf-val" style="font-size:11px;font-weight:400;line-height:1.65">${t.termsText}</div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
-      <div style="border-top:1px solid var(--text);padding-top:6px;text-align:center">
-        <div style="font-size:10px;color:var(--text3)">${t.sigA}</div>
-        <div style="height:40px"></div>
-        <div style="font-size:11px;color:var(--text3)">${currentTrade.myName || '—'}</div>
-      </div>
-      <div style="border-top:1px solid var(--text);padding-top:6px;text-align:center">
-        <div style="font-size:10px;color:var(--text3)">${t.sigB}</div>
-        <div style="height:40px"></div>
-        <div style="font-size:11px;color:var(--text3)">${currentTrade.partnerName || currentPartner.name || '—'}</div>
-      </div>
-    </div>
-
-    <div style="background:#FFFBEC;border:1px solid #E8C94A;border-radius:8px;padding:8px 12px;font-size:11px;color:#7A6010;line-height:1.5">
-      ${t.disclaimer}
-    </div>
-  `;
-
-  document.getElementById('pdf-modal').classList.add('open');
-}
-
-function closePdfModal() {
-  document.getElementById('pdf-modal').classList.remove('open');
-}
-
-function printAgreement() {
-  window.print();
-}
 
 </script>
 </body>
