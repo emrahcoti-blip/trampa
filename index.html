@@ -2063,15 +2063,10 @@ function openPdfModal() {
       </div>
     </div>
 
-    ${currentTrade.topup && currentTrade.topup !== 'Рамна размена' ? `
     <div class="pdf-section" style="margin-bottom:10px">
       <div class="pdf-label">${t.topup}</div>
-      <div class="pdf-val">${currentTrade.topup}</div>
-    </div>` : `
-    <div class="pdf-section" style="margin-bottom:10px;background:var(--success-light)">
-      <div class="pdf-label">${t.topup}</div>
-      <div class="pdf-val" style="color:var(--success)">Рамна размена / Equal swap / Shkëmbim i barabartë</div>
-    </div>`}
+      <div class="pdf-val">${currentTrade.topup || 'Рамна размена'}</div>
+    </div>
 
     <div class="pdf-section" style="margin-bottom:10px">
       <div class="pdf-label">${t.delivery}</div>
