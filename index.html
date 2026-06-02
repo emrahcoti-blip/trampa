@@ -1170,6 +1170,95 @@ input, select, textarea { font-family: var(--font-body); }
   </div>
 </div>
 
+
+<!-- SCREEN: ADMIN -->
+<div class="screen page-pad" id="s-admin">
+  <div style="max-width:700px;margin:0 auto;padding:1.5rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div>
+        <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text)">⚙️ Admin Panel</h2>
+        <p style="font-size:12px;color:var(--text3)">trampa.online — само за администратор</p>
+      </div>
+      <button onclick="goTo('home')" style="background:transparent;border:1px solid var(--border2);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:pointer">← Назад</button>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.25rem" id="admin-stats">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem;text-align:center">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--primary)" id="stat-listings">—</div>
+        <div style="font-size:11px;color:var(--text3)">Огласи</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem;text-align:center">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--primary)" id="stat-users">—</div>
+        <div style="font-size:11px;color:var(--text3)">Корисници</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem;text-align:center">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--primary)" id="stat-messages">—</div>
+        <div style="font-size:11px;color:var(--text3)">Пораки</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem;text-align:center">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--primary)" id="stat-convos">—</div>
+        <div style="font-size:11px;color:var(--text3)">Разговори</div>
+      </div>
+    </div>
+
+    <!-- Listings management -->
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div style="font-size:14px;font-weight:500;color:var(--text)">Сите огласи</div>
+        <button onclick="loadAdminListings()" style="background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer">🔄 Освежи</button>
+      </div>
+      <div id="admin-listings-list">
+        <div style="text-align:center;padding:1rem;color:var(--text3);font-size:13px">Се вчитува...</div>
+      </div>
+    </div>
+
+    <!-- Users management -->
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div style="font-size:14px;font-weight:500;color:var(--text)">Корисници</div>
+        <button onclick="loadAdminUsers()" style="background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text2);cursor:pointer">🔄 Освежи</button>
+      </div>
+      <div id="admin-users-list">
+        <div style="text-align:center;padding:1rem;color:var(--text3);font-size:13px">Се вчитува...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT LISTING MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box" style="position:relative;text-align:left;max-width:480px">
+    <button class="modal-close" onclick="closeEditModal()">✕</button>
+    <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text);margin-bottom:1rem">✏️ Уреди оглас</div>
+    <input type="hidden" id="edit-listing-id">
+    <div style="margin-bottom:10px">
+      <div class="f-label">Наслов / Нудиш</div>
+      <input class="f-input" type="text" id="edit-offer">
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="f-label">Што бараш</div>
+      <input class="f-input" type="text" id="edit-want">
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="f-label">Опис</div>
+      <textarea class="f-textarea" id="edit-desc" style="min-height:80px"></textarea>
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="f-label">Локација</div>
+      <input class="f-input" type="text" id="edit-loc">
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="f-label">Проценета вредност (€)</div>
+      <input class="f-input" type="number" id="edit-val">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1rem">
+      <button class="btn-secondary" onclick="closeEditModal()" style="flex:1;justify-content:center">Откажи</button>
+      <button class="btn-primary" onclick="saveEdit()" style="flex:2;justify-content:center">💾 Зачувај промени</button>
+    </div>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
   <button class="bn-item active" id="bn-home" onclick="goTo('home')">
@@ -1219,7 +1308,6 @@ input, select, textarea { font-family: var(--font-body); }
 // ============================================================
 const SUPABASE_URL = 'https://cflntakqzldgkmznokde.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_tPt_tIDUMveolTfSkjBNSg_llODT_vn'; //
-
 // Load Supabase client
 let supabase = null;
 async function initSupabase() {
@@ -1477,7 +1565,10 @@ async function openDetailReal(id) {
     <div class="detail-actions">
       <button class="btn-secondary" onclick="showToast('📞 Достапно по верификација')">📞 Покажи број</button>
       ${isOwner 
-        ? '<button class="btn-primary" style="background:var(--text3);cursor:default">📋 Твој оглас</button>'
+        ? '<div style="display:flex;gap:8px;flex:2">' +
+          '<button class="btn-secondary" style="flex:1;justify-content:center" onclick="editListing(\''+l.id+'\')">✏️ Уреди</button>' +
+          '<button class="btn-secondary" style="flex:1;justify-content:center;color:var(--danger);border-color:var(--danger)" onclick="deleteListing(\''+l.id+'\')">🗑 Избриши</button>' +
+          '</div>'
         : '<button class="btn-primary" onclick="startChatFromListing()">💬 Започни размена</button>'
       }
     </div>
@@ -1824,6 +1915,7 @@ initSupabase().catch(err => {
   renderListings();
   showProfileScreen(false);
 });
+checkRoute();
 
 // ============================================================
 // CHAT SYSTEM — FULLY DATABASE-BACKED WITH REALTIME
@@ -2095,6 +2187,160 @@ async function resumeChat(chatId, partnerName, offer, want, topup, partnerId) {
 // PDF TRADE AGREEMENT
 // ============================================================
 
+
+
+// ============================================================
+// ADMIN PANEL
+// ============================================================
+const ADMIN_EMAIL = 'emrahcoti@gmail.com'; // <-- your admin email
+
+async function checkAdmin() {
+  if (!supabase) return false;
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.user?.email === ADMIN_EMAIL;
+}
+
+async function goToAdmin() {
+  const isAdmin = await checkAdmin();
+  if (!isAdmin) { showToast('⛔ Немаш пристап'); return; }
+  goTo('admin');
+  loadAdminListings();
+  loadAdminUsers();
+  loadAdminStats();
+}
+
+async function loadAdminStats() {
+  const [l, u, m, c] = await Promise.all([
+    supabase.from('listings').select('id', {count:'exact',head:true}),
+    supabase.from('profiles').select('id', {count:'exact',head:true}),
+    supabase.from('messages').select('id', {count:'exact',head:true}),
+    supabase.from('conversations').select('id', {count:'exact',head:true}),
+  ]);
+  document.getElementById('stat-listings').textContent = l.count || 0;
+  document.getElementById('stat-users').textContent = u.count || 0;
+  document.getElementById('stat-messages').textContent = m.count || 0;
+  document.getElementById('stat-convos').textContent = c.count || 0;
+}
+
+async function loadAdminListings() {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*, profiles(name)')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const list = document.getElementById('admin-listings-list');
+  if (error || !data || data.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text3);font-size:13px">Нема огласи</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(l => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.title||l.offer||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${l.profiles?.name||'?'} • ${l.category||'—'} • ${new Date(l.created_at).toLocaleDateString('mk')}</div>
+        <div style="font-size:11px;color:var(--text2)">${(l.offer||'')+'  ⇄  '+(l.want||'')}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="adminDeleteListing('${l.id}')" style="background:var(--danger-light);border:none;border-radius:8px;padding:5px 10px;font-size:11px;color:var(--danger);cursor:pointer">🗑 Избриши</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadAdminUsers() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const list = document.getElementById('admin-users-list');
+  if (error || !data || data.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text3);font-size:13px">Нема корисници</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(u => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--earth);flex-shrink:0">
+        ${(u.name||'?').charAt(0).toUpperCase()}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:var(--text)">${u.name||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">★ ${u.score||5.0} • ${u.trades_count||0} размени • ${new Date(u.created_at).toLocaleDateString('mk')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function adminDeleteListing(id) {
+  if (!confirm('Сигурно сакаш да го избришеш овој оглас?')) return;
+  const { error } = await supabase.from('listings').delete().eq('id', id);
+  if (error) showToast('❌ Грешка: ' + error.message);
+  else { showToast('✅ Огласот е избришан'); loadAdminListings(); loadAdminStats(); }
+}
+
+// ============================================================
+// DELETE & EDIT LISTING (owner)
+// ============================================================
+async function deleteListing(id) {
+  if (!confirm('Сигурно сакаш да го избришеш овој оглас?')) return;
+  const { error } = await supabase.from('listings').delete().eq('id', id);
+  if (error) showToast('❌ ' + error.message);
+  else {
+    showToast('✅ Огласот е избришан');
+    setTimeout(() => { goTo('home'); loadListings(); }, 1000);
+  }
+}
+
+async function editListing(id) {
+  const { data: l } = await supabase.from('listings').select('*').eq('id', id).single();
+  if (!l) return;
+  document.getElementById('edit-listing-id').value = l.id;
+  document.getElementById('edit-offer').value = l.offer || '';
+  document.getElementById('edit-want').value = l.want || '';
+  document.getElementById('edit-desc').value = l.description || '';
+  document.getElementById('edit-loc').value = l.location || '';
+  document.getElementById('edit-val').value = l.value_eur || '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+
+async function saveEdit() {
+  const id = document.getElementById('edit-listing-id').value;
+  const offer = document.getElementById('edit-offer').value;
+  const want = document.getElementById('edit-want').value;
+  const desc = document.getElementById('edit-desc').value;
+  const loc = document.getElementById('edit-loc').value;
+  const val = document.getElementById('edit-val').value;
+
+  if (!offer || !want) { showToast('⚠️ Пополни ги задолжителните полиња'); return; }
+
+  const { error } = await supabase.from('listings').update({
+    offer, want, title: offer,
+    description: desc,
+    location: loc,
+    value_eur: val ? parseFloat(val) : null
+  }).eq('id', id);
+
+  if (error) showToast('❌ ' + error.message);
+  else {
+    showToast('✅ Огласот е ажуриран!');
+    closeEditModal();
+    setTimeout(() => { goTo('home'); loadListings(); }, 800);
+  }
+}
+
+// ── Secret admin route ────────────────────────────────────────
+function checkRoute() {
+  if (window.location.hash === '#admin') goToAdmin();
+}
+window.addEventListener('hashchange', checkRoute);
 
 </script>
 </body>
