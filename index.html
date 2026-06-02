@@ -921,6 +921,101 @@ input, select, textarea { font-family: var(--font-body); }
 .pdf-label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
 .pdf-val { font-size: 13px; color: var(--text); font-weight: 500; }
 .pdf-actions { display: flex; gap: 8px; margin-top: 1rem; }
+
+/* ===== PRO COSMETIC UPGRADES ===== */
+
+/* Smooth transitions everywhere */
+* { transition: color .15s, background .15s, border-color .15s, transform .15s, box-shadow .15s; }
+button, .listing-card, .match-card, .inbox-card { transition: all .2s cubic-bezier(.25,.8,.25,1); }
+
+/* Better navbar */
+.navbar { box-shadow: 0 2px 16px rgba(44,31,14,0.25); }
+.nav-logo img { filter: brightness(1.05); }
+
+/* Hero enhancement */
+.hero { background: linear-gradient(135deg, #2C1A0E 0%, #4A2E14 50%, #2C1A0E 100%); }
+.hero-cta { box-shadow: 0 4px 20px rgba(193,123,63,0.4); }
+.hero-cta:hover { box-shadow: 0 6px 24px rgba(193,123,63,0.5); transform: translateY(-2px); }
+
+/* Better cards */
+.listing-card { box-shadow: 0 1px 4px rgba(44,31,14,0.06); }
+.listing-card:hover { box-shadow: 0 8px 24px rgba(44,31,14,0.12); transform: translateY(-3px); }
+
+/* Better search */
+.search-wrap { box-shadow: 0 2px 8px rgba(44,31,14,0.06); }
+.search-input { transition: all .2s; }
+.search-input:focus { box-shadow: 0 0 0 3px rgba(193,123,63,0.15); }
+
+/* Category chips */
+.cat-chip { transition: all .2s; font-weight: 400; }
+.cat-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(44,31,14,0.1); }
+.cat-chip.active { box-shadow: 0 2px 8px rgba(193,123,63,0.3); }
+
+/* Better buttons */
+.btn-primary { box-shadow: 0 2px 8px rgba(193,123,63,0.3); }
+.btn-primary:hover { box-shadow: 0 4px 16px rgba(193,123,63,0.4); transform: translateY(-1px); }
+
+/* Match cards */
+.match-card { box-shadow: 0 1px 4px rgba(44,31,14,0.06); }
+.match-card:hover { box-shadow: 0 6px 20px rgba(44,31,14,0.1); transform: translateY(-2px); }
+
+/* Profile hero gradient */
+.profile-hero { background: linear-gradient(135deg, #2C1A0E 0%, #4A2E14 100%); }
+
+/* Chat bubbles */
+.msg-wrap.mine .msg-bubble { box-shadow: 0 1px 4px rgba(193,123,63,0.3); }
+.msg-wrap.theirs .msg-bubble { box-shadow: 0 1px 4px rgba(44,31,14,0.08); }
+
+/* Bottom nav */
+.bottom-nav { box-shadow: 0 -2px 16px rgba(44,31,14,0.08); }
+.bn-item { transition: color .2s; }
+.bn-item.active .bn-icon { transform: scale(1.15); }
+
+/* Trader card */
+.trader-card { box-shadow: 0 1px 4px rgba(44,31,14,0.06); }
+
+/* Detail image */
+.detail-img { position: relative; overflow: hidden; }
+.detail-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 60%, rgba(44,31,14,0.08)); }
+
+/* Empty states */
+.empty-inbox { animation: fadeIn .4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Listing grid animate in */
+.listing-card { animation: cardIn .3s ease both; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Better modal */
+.modal-box { box-shadow: 0 24px 64px rgba(44,31,14,0.3); animation: modalIn .25s cubic-bezier(.25,.8,.25,1); }
+@keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* PDF modal */
+.pdf-box { box-shadow: 0 24px 64px rgba(44,31,14,0.3); }
+
+/* Toast */
+.toast { box-shadow: 0 8px 24px rgba(44,31,14,0.25); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Admin panel */
+#s-admin { background: var(--cream-light); }
+
+/* Verified badge on listings */
+.lc-score { font-weight: 500; }
+
+/* Better form inputs */
+.f-input:focus, .f-select:focus, .f-textarea:focus { box-shadow: 0 0 0 3px rgba(193,123,63,0.15); }
+
+/* Post form card */
+.form-card { box-shadow: 0 2px 12px rgba(44,31,14,0.06); }
+
+/* Listings count */
+.listings-count { font-weight: 500; color: var(--text2); }
+
 </style>
 </head>
 <body>
@@ -952,9 +1047,9 @@ input, select, textarea { font-family: var(--font-body); }
       <span id="h-cta">Разгледај огласи</span> →
     </button>
     <div class="hero-stats">
-      <div class="hero-stat"><div class="hs-num">1,240</div><div class="hs-label" id="hs1">активни огласи</div></div>
-      <div class="hero-stat"><div class="hs-num">384</div><div class="hs-label" id="hs2">успешни размени</div></div>
-      <div class="hero-stat"><div class="hs-num">920</div><div class="hs-label" id="hs3">корисници</div></div>
+      <div class="hero-stat"><div class="hs-num" id="stat-active-listings">—</div><div class="hs-label" id="hs1">активни огласи</div></div>
+      <div class="hero-stat"><div class="hs-num" id="stat-users-count">—</div><div class="hs-label" id="hs2">корисници</div></div>
+      <div class="hero-stat"><div class="hs-num" id="stat-convos-count">—</div><div class="hs-label" id="hs3">разговори</div></div>
     </div>
   </div>
 
@@ -1307,8 +1402,7 @@ input, select, textarea { font-family: var(--font-body); }
 // SUPABASE CONFIG — PASTE YOUR ANON KEY BELOW
 // ============================================================
 const SUPABASE_URL = 'https://cflntakqzldgkmznokde.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_tPt_tIDUMveolTfSkjBNSg_llODT_vn'; //
-
+const SUPABASE_KEY = 'Ysb_publishable_tPt_tIDUMveolTfSkjBNSg_llODT_vn'; //
 // Load Supabase client
 let supabase = null;
 async function initSupabase() {
@@ -1388,11 +1482,7 @@ const listings = [
   { id:8, emoji:'🚴', bg:'#F8EEF5', cat:'sport', catLabel:'Спорт', title:'Trek Marlin 7 • МТБ • 2022', offer:'Trek МТБ велосипед', want:'Road bike / Triathlon', topup:'Отворено', loc:'Охрид', score:'4.9', trades:4, time:'пред 1 ден', matches:3, desc:'Планински велосипед Trek Marlin 7, 29 инчи, хидраулични кочници Shimano.' },
 ];
 
-const matches = [
-  { name:'Марко К.', initials:'МК', loc:'Куманово • 2.4km', score:'4.9', trades:14, fit:94, offer:'Seat Leon 1.9 TDI • 2007', want:'Мото 600cc', topup:'+ €200 од него', topupColor:'var(--success)' },
-  { name:'Александар Н.', initials:'АН', loc:'Скопје • 28km', score:'4.7', trades:6, fit:81, offer:'VW Golf 5 1.9 TDI • 2005', want:'Мото или електроника', topup:'Ти плаќаш €350', topupColor:'var(--primary)' },
-  { name:'Ивана Т.', initials:'ИТ', loc:'Куманово • 5km', score:'5.0', trades:19, fit:76, offer:'Honda CBR 600RR • 2009', want:'Автомобил до €4000', topup:'Рамна размена', topupColor:'var(--text3)' },
-];
+const matches = []; // loaded dynamically from DB
 
 // ============================================================
 // NAVIGATION
@@ -1402,10 +1492,14 @@ function goTo(screen) {
   const el = document.getElementById('s-' + screen);
   if (el) el.classList.add('active');
   document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  const bnMap = {home:'bn-home',matches:'bn-matches',post:'bn-post',profile:'bn-profile',detail:'bn-home',inbox:'bn-inbox',chat:'bn-inbox'};
+  const bnMap = {home:'bn-home',matches:'bn-matches',post:'bn-post',profile:'bn-profile',detail:'bn-home',inbox:'bn-inbox',chat:'bn-inbox',admin:'bn-home'};
   if (bnMap[screen]) { const bn = document.getElementById(bnMap[screen]); if(bn) bn.classList.add('active'); }
   currentScreen = screen;
   window.scrollTo(0, 0);
+  // Load real matches when navigating to matches screen
+  if (screen === 'matches') loadRealMatches();
+  // Stop polling when leaving chat
+  if (screen !== 'chat' && _pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
 }
 
 function scrollToListings() {
@@ -1484,7 +1578,7 @@ async function loadListings() {
     renderListings(); // fall back to demo data
     return;
   }
-  document.getElementById('listings-count').textContent = `Прикажани ${data.length} огласи`;
+  document.getElementById('listings-count').textContent = data.length + ' ' + (currentLang === 'en' ? 'active listings' : currentLang === 'sq' ? 'njoftime aktive' : 'активни огласи');
   const catEmojis = { vozila:'🚗', elektronika:'📱', nekretnini:'🏠', obleka:'👕', sport:'⚽', dom:'🛋', rabota:'💼', ostanato:'📦' };
   const catColors = { vozila:'#EDF2E8', elektronika:'#EEF0F8', nekretnini:'#F5EEE8', obleka:'#F8EEF5', sport:'#EEF8EE', dom:'#FDF5E8' };
   grid.innerHTML = data.map(l => `
@@ -1492,6 +1586,7 @@ async function loadListings() {
       <div class="lc-img" style="background:${catColors[l.category]||'#F5EEE8'}">
         ${catEmojis[l.category]||'📦'}
         <span class="lc-cat-badge">${l.category||'Останато'}</span>
+        ${(new Date() - new Date(l.created_at)) < 86400000 ? '<span class="lc-match-badge" style="background:var(--primary)">🆕 Ново</span>' : ''}
       </div>
       <div class="lc-body">
         <div class="lc-title">${l.title}</div>
@@ -1911,7 +2006,9 @@ function showToast(msg) {
 renderCats(i18n.mk.cats);
 renderMatches();
 // Initialize Supabase and load real data
-initSupabase().catch(err => {
+initSupabase().then(() => {
+  loadHeroStats();
+}).catch(err => {
   console.log('Supabase init failed, using demo data:', err);
   renderListings();
   showProfileScreen(false);
@@ -2045,10 +2142,15 @@ async function loadMessages() {
 }
 
 // ── Subscribe to realtime messages ──────────────────────────
+let _lastMsgId = null;
+let _pollInterval = null;
+
 function subscribeToChat() {
   if (!supabase || !currentChatId) return;
   if (chatSubscription) { supabase.removeChannel(chatSubscription); }
+  if (_pollInterval) clearInterval(_pollInterval);
 
+  // Primary: Postgres realtime
   chatSubscription = supabase
     .channel('messages_' + currentChatId)
     .on('postgres_changes', {
@@ -2058,11 +2160,32 @@ function subscribeToChat() {
       filter: 'chat_id=eq.' + currentChatId
     }, (payload) => {
       const msg = payload.new;
-      if (msg.from_id === currentUserId) return; // already shown
+      if (msg.from_id === currentUserId) return;
+      if (msg.id === _lastMsgId) return;
+      _lastMsgId = msg.id;
       const time = new Date(msg.created_at).toLocaleTimeString('mk', {hour:'2-digit',minute:'2-digit'});
       appendMessage(msg.body, time, false);
     })
-    .subscribe();
+    .subscribe((status) => {
+      console.log('Realtime status:', status);
+    });
+
+  // Fallback: poll every 3 seconds for new messages
+  _pollInterval = setInterval(async () => {
+    if (currentScreen !== 'chat') return;
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('chat_id', currentChatId)
+      .neq('from_id', currentUserId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (data && data[0] && data[0].id !== _lastMsgId) {
+      _lastMsgId = data[0].id;
+      const time = new Date(data[0].created_at).toLocaleTimeString('mk', {hour:'2-digit',minute:'2-digit'});
+      appendMessage(data[0].body, time, false);
+    }
+  }, 3000);
 }
 
 // ── Send a message ───────────────────────────────────────────
@@ -2501,6 +2624,155 @@ function closePdfModal() {
 
 function printAgreement() {
   window.print();
+}
+
+
+// ============================================================
+// REAL HERO STATS
+// ============================================================
+async function loadHeroStats() {
+  if (!supabase) return;
+  try {
+    const [listings, profiles, convos] = await Promise.all([
+      supabase.from('listings').select('id', {count:'exact',head:true}).eq('status','active'),
+      supabase.from('profiles').select('id', {count:'exact',head:true}),
+      supabase.from('conversations').select('id', {count:'exact',head:true}),
+    ]);
+    const el = (id) => document.getElementById(id);
+    if (el('stat-active-listings')) el('stat-active-listings').textContent = (listings.count || 0).toLocaleString();
+    if (el('stat-users-count')) el('stat-users-count').textContent = (profiles.count || 0).toLocaleString();
+    if (el('stat-convos-count')) el('stat-convos-count').textContent = (convos.count || 0).toLocaleString();
+  } catch(e) {
+    console.log('Stats load error:', e);
+  }
+}
+
+// ============================================================
+// REAL MATCHING ENGINE
+// ============================================================
+async function loadRealMatches() {
+  const matchesWrap = document.getElementById('matches-list');
+  if (!matchesWrap) return;
+
+  if (!isLoggedIn || !supabase) {
+    matchesWrap.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)"><div style="font-size:40px;margin-bottom:1rem">🔒</div><div style="font-size:14px">Пријави се за да ги видиш твоите совпаѓања</div></div>';
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  matchesWrap.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px">Се бараат совпаѓања...</div>';
+
+  // Get current user listings to find what they offer/want
+  const { data: myListings } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .eq('status', 'active');
+
+  // Get all other active listings
+  const { data: otherListings } = await supabase
+    .from('listings')
+    .select('*, profiles(name, score, trades_count, location)')
+    .neq('user_id', session.user.id)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (!otherListings || otherListings.length === 0) {
+    matchesWrap.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3)"><div style="font-size:40px;margin-bottom:1rem">⚡</div><div style="font-size:14px">Нема совпаѓања уште. Објави оглас за да почнеш!</div></div>';
+    return;
+  }
+
+  // Calculate match score for each listing
+  const scored = otherListings.map(listing => {
+    let score = 50; // base score
+
+    // Category keyword matching
+    if (myListings && myListings.length > 0) {
+      myListings.forEach(mine => {
+        const myWant = (mine.want || '').toLowerCase();
+        const theirOffer = (listing.offer || '').toLowerCase();
+        const theirWant = (listing.want || '').toLowerCase();
+        const myOffer = (mine.offer || '').toLowerCase();
+
+        // Check if their offer matches what I want
+        const words = myWant.split(' ').filter(w => w.length > 3);
+        words.forEach(w => { if (theirOffer.includes(w)) score += 15; });
+
+        // Check if what they want matches what I offer
+        const words2 = theirWant.split(' ').filter(w => w.length > 3);
+        words2.forEach(w => { if (myOffer.includes(w)) score += 15; });
+
+        // Same category bonus
+        if (mine.category === listing.category) score += 10;
+
+        // Value proximity bonus
+        if (mine.value_eur && listing.value_eur) {
+          const diff = Math.abs(mine.value_eur - listing.value_eur);
+          const avg = (mine.value_eur + listing.value_eur) / 2;
+          if (avg > 0 && diff / avg < 0.2) score += 20;
+          else if (avg > 0 && diff / avg < 0.5) score += 10;
+        }
+      });
+    } else {
+      score = 60 + Math.floor(Math.random() * 30); // random if no listings yet
+    }
+
+    return { ...listing, matchScore: Math.min(99, score) };
+  });
+
+  // Sort by match score
+  scored.sort((a, b) => b.matchScore - a.matchScore);
+  const top = scored.slice(0, 10);
+
+  matchesWrap.innerHTML = top.map(l => {
+    const name = l.profiles?.name || 'Корисник';
+    const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const score = l.matchScore;
+    const scoreColor = score > 80 ? 'var(--success)' : score > 60 ? 'var(--primary)' : 'var(--text3)';
+    const scoreBg = score > 80 ? 'var(--success-light)' : score > 60 ? '#E6F1FB' : 'var(--surface)';
+    return '<div class="match-card">' +
+      '<div class="mc-header">' +
+        '<div class="mc-avatar">' + initials + '</div>' +
+        '<div class="mc-info">' +
+          '<div class="mc-name">' + name + '</div>' +
+          '<div class="mc-meta">' +
+            '<span>📍 ' + (l.location || 'Македонија') + '</span>' +
+            '<span>★ ' + (l.profiles?.score || '5.0') + ' • ' + (l.profiles?.trades_count || 0) + ' размени</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="fit-badge" style="background:' + scoreBg + ';color:' + scoreColor + '">' + score + '% совпаѓање</div>' +
+      '</div>' +
+      '<div class="mc-trade-box">' +
+        '<div class="mc-trade-row">' +
+          '<span class="mct-item">' + (l.offer || '—') + '</span>' +
+          '<span class="mct-arr">⇄</span>' +
+          '<span class="mct-item">' + (l.want || '—') + '</span>' +
+          (l.topup_amt ? '<span class="mct-topup">€' + l.topup_amt + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="compat-bar">' +
+        '<div class="cb-row"><span class="cb-label">Совпаѓање на барање</span><span class="cb-val" style="color:' + scoreColor + '">' + score + '%</span></div>' +
+        '<div class="cb-track"><div class="cb-fill" style="width:' + score + '%;background:' + scoreColor + '"></div></div>' +
+      '</div>' +
+      '<div class="mc-actions">' +
+        '<button class="mc-decline" onclick="this.closest('.match-card').style.display=\'none\'">Прескокни</button>' +
+        '<button class="mc-accept" onclick="startMatchChat('' + l.id + '\','' + name + '\','' + (l.offer||'').replace(/'/g,\'\\\'\'\') + '\','' + (l.want||'').replace(/'/g,\'\\\'\'\') + '\','' + l.user_id + '\')">💬 Започни размена</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function startMatchChat(listingId, partnerName, offer, want, partnerId) {
+  if (!isLoggedIn) { openAuth(); return; }
+  window._currentListingId = listingId;
+  window._currentListingUserId = partnerId;
+  window._currentListingUserName = partnerName;
+  window._currentListingOffer = offer;
+  window._currentListingWant = want;
+  await startChatFromListing();
 }
 
 </script>
